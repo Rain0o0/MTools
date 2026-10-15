@@ -1,0 +1,33 @@
+{
+  "manifest_version": 1,
+  "tool_id": "json-formatter",
+  "version": "1.0.0",
+  "name": "JSON 格式化",
+  "description": "整理、校验和压缩 JSON，保留中文，让结构更清晰。",
+  "category": "开发工具",
+  "tags": ["JSON", "格式化", "校验", "压缩"],
+  "execution_target": "backend",
+  "supported_modes": ["desktop", "source-web", "docker-web"],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [{
+    "operation_id": "format",
+    "title": "整理 JSON",
+    "description": "校验并格式化或压缩 JSON 文本，支持中文和键名排序；不保存或修改文件。数值按标准解析器处理，需要精确保留的数字请作为字符串。",
+    "effects": "read-only",
+    "ai_callable": true,
+    "contract_version": 1,
+    "input_schema": "#/components/schemas/JsonParameters",
+    "output_schema": "#/components/schemas/JsonResult",
+    "execution": "sync",
+    "cancellable": false,
+    "idempotent": true,
+    "timeout_seconds": 5,
+    "max_input_bytes": 400000
+  }],
+  "ui": {"route": "/tools/json-formatter"},
+  "docs": {
+    "overview": "docs/features/json-formatter/overview.md",
+    "usage": "docs/features/json-formatter/usage.md"
+  }
+}
