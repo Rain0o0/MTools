@@ -14,7 +14,7 @@ tags: [desktop, windows, webview, packaging]
 
 ## 打开和退出
 
-本地构建产物在 dist/desktop/MTools/，双击 MTools.exe。保留同目录 MToolsAI.exe 和 _internal/；无需安装 Python 或 Node，Windows 必须有 WebView2 运行时。关闭窗口同时停止本实例服务；不会结束其他进程或占用固定 8000 端口。
+本地构建产物在 dist/desktop/MTools/，双击 MTools.exe。保留同目录 MToolsAI.exe 和 _internal/；无需安装 Python 或 Node，Windows 必须有 WebView2 运行时。程序及窗口使用橙色外层、黄色 M 图标，程序属性同步应用版本。关闭窗口同时停止本实例服务；不会结束其他进程或占用固定 8000 端口。
 
 窗口无法创建或界面资源不完整时弹出错误提示。WebView2 缺失时按 [Microsoft 官方运行时说明](https://developer.microsoft.com/microsoft-edge/webview2/) 安装对应运行时再打开，软件不静默下载执行代码。数据目录需当前用户可写。
 
@@ -36,9 +36,9 @@ tags: [desktop, windows, webview, packaging]
 
 ## 数据与权限
 
-桌面监听随机回环端口，只有原生窗口为本实例来源请求附加随机凭据；普通浏览器不能打开该桌面实例。限制导航与新窗口，不暴露通用 Python 调用桥。这是防止网页误用本机服务的边界，不隔离拥有本机进程控制权的用户。
+桌面从 49152–65535 中随机绑定可用回环端口（避开 WebView2 的受限低端口，最多重试 64 次），只有原生窗口为本实例来源请求附加随机凭据；普通浏览器不能打开该桌面实例。限制导航与新窗口，不暴露通用 Python 调用桥。这是防止网页误用本机服务的边界，不隔离拥有本机进程控制权的用户。
 
-主题保存在用户数据目录 preferences.json；webview/ 为嵌入式引擎缓存，logs/ 为运行诊断。输入和结果不保存历史，离开页面前自行复制或下载。退出后可备份 preferences.json；缓存不是业务备份。完整配置见 [配置说明](configuration.md)。
+主题和常用工具保存在用户数据目录 preferences.json；webview/ 为嵌入式引擎缓存，logs/ 为运行诊断。输入和结果不保存历史，离开页面前自行复制或下载。退出后可备份 preferences.json；缓存不是业务备份。完整配置见 [配置说明](configuration.md)。
 
 下载会打开系统保存对话框；取消保存不会生成文件，页面“已生成下载文件”只表示已交给保存流程。AI 配置在“AI 助手”页面获取，详见 [AI 使用](../features/ai-interop/usage.md)。
 

@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+export PYTHONUTF8=1
+uv run --frozen python scripts/check_version.py --staged

@@ -19,6 +19,7 @@ from mtools.platform.execution import ToolRuntime
 
 def test_desktop_credentials_and_shutdown(tmp_path: Path) -> None:
     service = DesktopService(Settings(data_dir=tmp_path))
+    assert 49152 <= service.port <= 65535
     try:
         service.start()
         with httpx.Client(base_url=service.origin) as client:
@@ -55,7 +56,7 @@ def test_mcp_stdio_real_client(tmp_path: Path) -> None:
             async with ClientSession(reader, writer) as session:
                 await session.initialize()
                 tools = (await session.list_tools()).tools
-                assert len(tools) == 1
+                assert len(tools) == 4
                 tool = tools[0]
                 assert tool.name == "mtools_json_formatter__format_v1"
                 assert tool.inputSchema["additionalProperties"] is False
@@ -80,7 +81,7 @@ def test_mcp_stdio_real_client(tmp_path: Path) -> None:
 def test_mcp_disabled_and_write_policy(tmp_path: Path) -> None:
     registry = assemble_tools(Settings(data_dir=tmp_path, disabled_tools=["json-formatter"]))
     gateway = McpGateway(ToolRuntime(registry, logging.getLogger("test")))
-    assert gateway.list_tools() == []
+    assert "mtools_json_formatter__format_v1" not in [tool.name for tool in gateway.list_tools()]
     assert asyncio.run(gateway.call("mtools_json_formatter__format_v1", {"text": "{}"})).isError
     registry = assemble_tools(Settings(data_dir=tmp_path))
     registry.tools["json-formatter"].manifest.operations[0].effects = "write"

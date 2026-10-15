@@ -10,3 +10,8 @@ export const SessionInfo: ValidateFunction<components['schemas']['SessionInfo']>
 export const Health: ValidateFunction<components['schemas']['Health']>;
 export const Preferences: ValidateFunction<components['schemas']['Preferences']>;
 export const AiConnection: ValidateFunction<components['schemas']['AiConnection']>;
+export const DiffResult: ValidateFunction<components['schemas']['DiffResult']>;
+export const JsonLinesResult: ValidateFunction<components['schemas']['JsonLinesResult']>;
+export const CodecResult: ValidateFunction<components['schemas']['CodecResult']>;
+export const CodexStatus: ValidateFunction<components['schemas']['CodexStatus']>;
+export const ConnectionTest: ValidateFunction<components['schemas']['ConnectionTest']>;

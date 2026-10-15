@@ -1,0 +1,45 @@
+{
+  "manifest_version": 1,
+  "tool_id": "text-diff",
+  "version": "1.0.0",
+  "name": "文本差异",
+  "description": "对比提示词、代码或配置，快速找到新增和删除的内容。",
+  "category": "开发工具",
+  "tags": [
+    "差异",
+    "提示词",
+    "代码"
+  ],
+  "execution_target": "backend",
+  "supported_modes": [
+    "desktop",
+    "source-web",
+    "docker-web"
+  ],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [
+    {
+      "operation_id": "compare",
+      "title": "比较文本",
+      "description": "逐行比较两份文本，保留行尾换行差异；每份最多 50000 字符、2000 行，上下文 0 至 10 行。不保存输入或修改文件。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/DiffParameters",
+      "output_schema": "#/components/schemas/DiffResult",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": true,
+      "timeout_seconds": 5,
+      "max_input_bytes": 800000
+    }
+  ],
+  "ui": {
+    "route": "/tools/text-diff"
+  },
+  "docs": {
+    "overview": "docs/features/text-diff/overview.md",
+    "usage": "docs/features/text-diff/usage.md"
+  }
+}

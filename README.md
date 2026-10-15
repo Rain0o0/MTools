@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-2026-10-15：Windows 独立桌面软件、FastAPI/React 共享核心和统一 MCP 已实现，提供工具目录、搜索分类、设置、帮助与 JSON 格式化。卡片、标签、状态、隐私与帮助可直接操作，主题保存到应用数据目录。
+2026-10-15：Windows 独立桌面软件、FastAPI/React 共享核心和统一 MCP 已实现，当前版本 0.2.0，提供紧凑工具目录、常用快捷入口、设置、帮助、JSON 格式化、文本差异、JSON/JSONL 转换、编码与摘要。AI 助手支持 Codex 快捷添加与真实连接测试；软件使用橙色外层、黄色 M 图标。卡片、标签、状态、隐私与帮助可直接操作，主题保存到应用数据目录。
 
 Windows 目录包与 Docker 已在本机完成真实运行验证；文件上传、持久长任务和 AI 写入授权尚未实现。具体实现状态以 [项目现状](docs/project/status.md) 和 [功能索引](docs/features/README.md) 为准。
 
@@ -31,6 +31,7 @@ uv run --frozen mtools
 | 增加工具或复用已有能力 | [工具接入规范](docs/standards/tool-development.md) |
 | 查看近期实施建议 | [待实施路线](docs/project/roadmap.md) |
 | 查找当前缺陷 | [当前问题](docs/issues/open.md) |
+| 版本迭代 | [Git 与版本规则](docs/guides/versioning.md) |
 | 查看更新 | [变更日志](CHANGELOG.md) |
 
 ## 技术方向

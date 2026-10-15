@@ -1,7 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePlatform } from './context';
 import { useDialog } from '../shared/dialog';
+import { errorText, request } from '../shared/api';
+
+const toolSymbols: Record<string, string> = {
+  'json-formatter': '{ }',
+  'text-diff': '↔',
+  'json-lines': '[L]',
+  'text-codec': '#',
+};
 
 export const statusLabels = {
   available: '可使用',
@@ -15,6 +23,45 @@ export function CatalogPage() {
   const { catalog, capabilities, loading, error, reload } = usePlatform();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('全部工具');
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [saving, setSaving] = useState(true);
+  const [favoriteNotice, setFavoriteNotice] = useState('');
+  const favoriteBusy = useRef(false);
+  const [preferenceAttempt, setPreferenceAttempt] = useState(0);
+  useEffect(() => {
+    request('/preferences', 'Preferences')
+      .then((value) => {
+        setFavorites(value.favorite_tools ?? []);
+        setSaving(false);
+        setFavoriteNotice('');
+      })
+      .catch((error: unknown) => setFavoriteNotice(errorText(error)));
+  }, [preferenceAttempt]);
+  async function toggleFavorite(toolId: string) {
+    if (favoriteBusy.current || saving) return;
+    const updated = favorites.includes(toolId)
+      ? favorites.filter((value) => value !== toolId)
+      : [...favorites, toolId];
+    if (updated.length > 12) {
+      setFavoriteNotice('常用工具最多保留 12 项，请先取消一项。');
+      return;
+    }
+    favoriteBusy.current = true;
+    setSaving(true);
+    try {
+      const result = await request('/preferences', 'Preferences', {
+        method: 'PATCH',
+        body: JSON.stringify({ favorite_tools: updated }),
+      });
+      setFavorites(result.favorite_tools ?? []);
+      setFavoriteNotice('常用工具已保存');
+    } catch (error) {
+      setFavoriteNotice(errorText(error));
+    } finally {
+      favoriteBusy.current = false;
+      setSaving(false);
+    }
+  }
   const entries = catalog?.items ?? [];
   const categories = [
     '全部工具',
@@ -31,11 +78,9 @@ export function CatalogPage() {
   );
   return (
     <>
-      <header className="page-heading">
+      <header className="page-heading compact-heading catalog-heading">
         <div>
-          <p className="eyebrow">你的日常工作台</p>
           <h1>工具目录</h1>
-          <p>少一些重复，多一些顺手。找到工具，专注眼前的事。</p>
         </div>
         <Link className="environment" to="/settings">
           {capabilities?.mode === 'docker-web' ? '共享工作区' : '本机工作区'} ·{' '}
@@ -43,20 +88,6 @@ export function CatalogPage() {
           个可用工具
         </Link>
       </header>
-      <section className="welcome">
-        <div>
-          <span className="eyebrow">小工具，大作用</span>
-          <h2>把繁琐留给工具</h2>
-          <p>一个清爽的工作区，从整理第一段 JSON 开始。</p>
-          <Link className="text-link" to="/tools/json-formatter">
-            开始整理 →
-          </Link>
-        </div>
-        <div className="welcome-art" aria-hidden="true">
-          {'{ }'}
-          <span>整齐 · 清晰 · 高效</span>
-        </div>
-      </section>
       <div className="catalog-toolbar">
         <label className="search">
           <span aria-hidden="true">⌕</span>
@@ -71,6 +102,42 @@ export function CatalogPage() {
           刷新目录
         </button>
       </div>
+      <section className="favorites-row" aria-label="常用工具">
+        <span className="favorites-label">常用工具</span>
+        {favorites
+          .map((toolId) =>
+            entries.find((entry) => entry.manifest.tool_id === toolId),
+          )
+          .filter((entry) => entry?.status === 'available')
+          .map(
+            (entry) =>
+              entry && (
+                <Link
+                  key={entry.manifest.tool_id}
+                  to={entry.manifest.ui.route}
+                  className="favorite-shortcut"
+                >
+                  <span aria-hidden="true">
+                    {toolSymbols[entry.manifest.tool_id] ?? '◇'}
+                  </span>
+                  {entry.manifest.name}
+                </Link>
+              ),
+          )}
+        {!saving && favorites.length === 0 && (
+          <span className="muted-hint">点击工具卡片的 ☆，添加到这里。</span>
+        )}
+      </section>
+      {favoriteNotice && (
+        <p role="status" className="favorite-notice">
+          {favoriteNotice}
+          {saving && !favoriteBusy.current && (
+            <button onClick={() => setPreferenceAttempt((value) => value + 1)}>
+              重试读取偏好
+            </button>
+          )}
+        </p>
+      )}
       <div className="filters" aria-label="工具分类">
         {categories.map((item) => (
           <button
@@ -121,8 +188,20 @@ export function CatalogPage() {
                 <article className="tool-card" key={manifest.tool_id}>
                   <div className="card-top">
                     <span className="tool-icon" aria-hidden="true">
-                      {'{ }'}
+                      {toolSymbols[manifest.tool_id] ?? '◇'}
                     </span>
+                    <button
+                      type="button"
+                      className="favorite-toggle"
+                      disabled={saving}
+                      aria-label={`${favorites.includes(manifest.tool_id) ? '取消常用' : '设为常用'} ${manifest.name}`}
+                      aria-pressed={favorites.includes(manifest.tool_id)}
+                      onClick={() => {
+                        void toggleFavorite(manifest.tool_id);
+                      }}
+                    >
+                      {favorites.includes(manifest.tool_id) ? '★' : '☆'}
+                    </button>
                     <button
                       type="button"
                       className={`badge ${status}`}

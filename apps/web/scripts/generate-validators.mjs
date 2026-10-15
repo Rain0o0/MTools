@@ -15,6 +15,11 @@ const names = [
   'Health',
   'Preferences',
   'AiConnection',
+  'DiffResult',
+  'JsonLinesResult',
+  'CodecResult',
+  'CodexStatus',
+  'ConnectionTest',
 ];
 const ajv = new Ajv({
   strict: false,

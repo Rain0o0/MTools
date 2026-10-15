@@ -69,7 +69,7 @@ Python 使用 pyproject.toml 与 uv.lock，前端使用 package.json 与 pnpm-lo
 
 ## 6. 发布与验收
 
-发布使用一致应用版本/源码提交标识；工具版本、公共协议版本和数据 schema 版本分别报告。CHANGELOG.md 的未发布条目按实际版本移动，保留 breaking changes 和迁移说明。
+每批更新按用户要求递增 minor、patch 固定 0，项目/后端/前端/锁文件同步，并由暂存区钩子校验；具体流程见 [版本迭代](../guides/versioning.md)。发布使用一致应用版本/源码提交标识；工具版本、公共协议版本和数据 schema 版本分别报告。CHANGELOG.md 的未发布条目按实际版本移动，保留 breaking changes 和迁移说明。
 
 每次发行记录支持系统、运行时、镜像标签/摘要、构建方式、依赖许可与验证环境；发布前决定项目许可证，不能自行套用 MIT 等默认授权。
 

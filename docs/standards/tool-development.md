@@ -48,7 +48,7 @@ tags: [tool, manifest, contracts, extension, reuse]
 - 结果包含机器可用数据与必要展示信息，不强迫下游解析中文提示文字或 UI HTML。
 - 超时、最大输入量、执行位置、取消支持、可否重试/重放都须声明。不可取消的操作不能显示已取消。
 
-统一后端执行入口形状为 POST /api/v1/tools/{tool_id}/operations/{operation_id}/execute。当前已实现 JSON 同步操作，输入携带契约版本和参数，返回明确结果模型；各工具显式注册强类型路由。任务模式尚未实现，未来实现后返回 202、job_id、status_url，不能提前作为现有接口使用。当前以 OpenAPI 和 [平台契约子集](../features/platform-shell/overview.md) 为事实来源。
+统一后端执行入口形状为 POST /api/v1/tools/{tool_id}/operations/{operation_id}/execute。当前已实现 JSON 格式化、文本差异、JSON/JSONL 与编码/摘要同步操作，输入携带契约版本和参数，返回明确结果模型；各工具显式注册强类型路由。任务模式尚未实现，未来实现后返回 202、job_id、status_url，不能提前作为现有接口使用。当前以 OpenAPI 和 [平台契约子集](../features/platform-shell/overview.md) 为事实来源。
 
 每个公开操作必须可供 AI 调用，遵守 [MCP 规范](mcp.md)。当前 OperationHandler 绑定输入/输出模型和处理器，ToolRuntime 共用于 HTTP 与 MCP；清单 schema 名与模型不一致时拒绝装配。纯前端操作也需提供可信 AI 执行适配器，不能仅注册页面或伪造后端持久任务。需要持久历史或后台运行时才迁移/委托到后端。特殊上传、预览接口见后端规范。
 

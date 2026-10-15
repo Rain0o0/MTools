@@ -20,7 +20,7 @@ tags: [configuration, environment, security]
 | WEB_DIR | 路径，源码 apps/web/dist | Docker 固定 /app/web；安装 wheel 时需显式指定构建目录 |
 | ALLOWED_HOSTS | JSON 字符串数组，127.0.0.1、localhost、[::1] | 禁止通配符，不含端口 |
 | ALLOWED_ORIGINS | JSON 数组，http://127.0.0.1:8000 与 http://localhost:8000 | 明确协议/主机/端口；无尾随斜杠与通配符 |
-| DISABLED_TOOLS | JSON 数组，[] | 当前可填 json-formatter；未知 ID 阻止启动 |
+| DISABLED_TOOLS | JSON 数组，[] | 可填 json-formatter、text-diff、json-lines、text-codec；未知 ID 阻止启动 |
 | SESSION_TTL_SECONDS | 整数，28800；60–86400 | 内存短期会话；重启全部失效 |
 | MAX_SESSIONS | 整数，128；1–1024 | 达上限返回 429；过期会话创建时清理 |
 | MAX_REQUEST_BYTES | 整数，1048576；1024–4194304 | 请求体接收上限，超限 413；工具还有更小输入上限 |
@@ -39,4 +39,4 @@ uv run --frozen mtools serve --port 8080
 
 此后访问 http://127.0.0.1:8080。环境变量仅作用于当前终端及子进程。包含中文或空格的路径通过环境变量传递，不拼接进 shell 命令；相对数据路径以启动时的工作目录解析，稳定部署建议使用绝对目录。
 
-需要停用工具时设置 `$env:MTOOLS_DISABLED_TOOLS='["json-formatter"]'` 后重启。目录仍展示停用原因，直接调用操作返回 503；核心就绪不受影响。Docker 数据固定 /data，并用命名卷存储日志和主题，见 [Docker 指南](docker.md)。设置页切换主题经会话/CSRF 保护的 PUT /api/v1/preferences 原子保存；损坏 JSON/schema 回退浅色，写入失败明确提示。由旧 localStorage 升级时默认浅色，不自动迁移浏览器偏好。桌面端口/Host/Origin 由入口管理，--host/--port 仅对 serve 的监听有意义。
+需要停用工具时设置 `$env:MTOOLS_DISABLED_TOOLS='["json-formatter"]'` 后重启。目录仍展示停用原因，直接调用操作返回 503；核心就绪不受影响。Docker 数据固定 /data，并用命名卷存储日志、主题和常用工具，见 [Docker 指南](docker.md)。设置页切换主题经会话/CSRF 保护的 PATCH /api/v1/preferences 原子保存，与常用工具互不覆盖；损坏 JSON/schema 回退浅色，写入失败明确提示。由旧 localStorage 升级时默认浅色，不自动迁移浏览器偏好。桌面端口/Host/Origin 由入口管理，--host/--port 仅对 serve 的监听有意义。

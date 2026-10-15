@@ -1,7 +1,7 @@
 import { chromium, expect } from '@playwright/test';
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
@@ -46,12 +46,14 @@ user.EnumWindows(close, 0)
 try {
   if (native) {
     await mkdir(data, { recursive: true });
+    const codexData = await mkdtemp(resolve(root, '.runtime/codex-delivery-'));
     processHandle = spawn(resolve(root, 'dist/desktop/MTools/MTools.exe'), [], {
       cwd: data,
       windowsHide: true,
       env: {
         ...process.env,
         MTOOLS_DATA_DIR: data,
+        CODEX_HOME: codexData,
         WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: '--remote-debugging-port=9337',
       },
       stdio: 'ignore',
@@ -81,7 +83,9 @@ try {
     page.getByRole('heading', { name: '工具目录', exact: true }),
   ).toBeVisible();
   origin = new URL(page.url()).origin;
-  await expect(page.getByRole('link', { name: '打开工具' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: '打开工具' }).first(),
+  ).toBeVisible();
   if (storedTheme)
     await expect(page.locator('html')).toHaveAttribute(
       'data-theme',
@@ -95,10 +99,10 @@ try {
     fullPage: true,
     path: resolve(
       root,
-      `docs/assets/platform-shell/2026-10-15-${mode}-catalog.png`,
+      `docs/assets/platform-shell/2026-10-15-v02-${mode}-catalog.png`,
     ),
   });
-  await page.getByRole('link', { name: '打开工具' }).click();
+  await page.getByRole('link', { name: '打开工具' }).first().click();
   await page.getByRole('button', { name: '填入示例' }).click();
   await page.getByRole('button', { name: '格式化 JSON' }).click();
   await expect(page.getByLabel('处理结果', { exact: true })).toHaveValue(
@@ -107,7 +111,7 @@ try {
   await page.screenshot({
     path: resolve(
       root,
-      `docs/assets/platform-shell/2026-10-15-${mode}-json.png`,
+      `docs/assets/platform-shell/2026-10-15-v02-${mode}-json.png`,
     ),
   });
   if (!native) {
@@ -128,6 +132,25 @@ try {
   await page.getByLabel('界面主题').selectOption('dark');
   await expect(page.getByLabel('界面主题')).toBeEnabled();
   await page.getByRole('link', { name: 'AI 助手', exact: true }).click();
+  await page.getByRole('button', { name: '测试连接', exact: true }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: '工具连接正常' }),
+  ).toContainText('4 项示例调用');
+  if (native) {
+    await expect(
+      page.getByRole('button', { name: '添加到 Codex', exact: true }),
+    ).toBeEnabled();
+    await page
+      .getByRole('button', { name: '添加到 Codex', exact: true })
+      .click();
+    await expect(page.getByText('配置已添加', { exact: true })).toBeVisible();
+  }
+  await page.screenshot({
+    path: resolve(
+      root,
+      `docs/assets/platform-shell/2026-10-15-v02-${mode}-ai.png`,
+    ),
+  });
   await page.getByRole('button', { name: '获取连接信息' }).click();
   await expect(page.getByLabel('MTools 连接配置')).toHaveValue(/mcpServers/);
   const config = JSON.parse(
@@ -135,6 +158,32 @@ try {
   );
   if (native) expect(config.mcpServers.mtools.command).toMatch(/MToolsAI.exe$/);
   else expect(config.mcpServers.mtools.command).toBe('docker');
+  await page.getByRole('button', { name: '关闭说明' }).click();
+  for (const [toolId, input, value, expected] of [
+    ['text-codec', '输入文本', '中文', '5Lit5paH'],
+    ['json-lines', '输入 JSON / JSONL', '[{"中文":true}]', '{"中文":true}\n'],
+  ]) {
+    await page.getByRole('link', { name: '工具目录', exact: true }).click();
+    await page.locator(`a.card-link[href="/tools/${toolId}"]`).click();
+    await page.getByLabel(input, { exact: true }).fill(value);
+    await page.getByRole('button', { name: '开始处理' }).click();
+    await expect(page.getByLabel('处理结果', { exact: true })).toHaveValue(
+      expected,
+    );
+  }
+  await page.getByRole('link', { name: '工具目录', exact: true }).click();
+  await page.locator('a.card-link[href="/tools/text-diff"]').click();
+  await page.getByRole('button', { name: '填入示例' }).click();
+  await page.getByRole('button', { name: '比较文本' }).click();
+  await expect(page.getByLabel('处理结果', { exact: true })).toHaveValue(
+    /\+请使用中文回答，并给出验证方法/,
+  );
+  await page.screenshot({
+    path: resolve(
+      root,
+      `docs/assets/platform-shell/2026-10-15-v02-${mode}-diff.png`,
+    ),
+  });
   expect(errors).toEqual([]);
   console.log(
     `${mode}: real operation, deep route, preferences, AI configuration and UI passed`,

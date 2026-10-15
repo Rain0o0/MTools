@@ -102,12 +102,36 @@ class Health(Contract):
 class Preferences(Contract):
     version: Literal[1] = 1
     theme: Literal["light", "dark"] = "light"
+    favorite_tools: list[ToolId] = Field(
+        default_factory=lambda: ["json-formatter", "text-diff", "json-lines", "text-codec"],
+        max_length=12,
+    )
+
+
+class PreferenceUpdate(Contract):
+    theme: Literal["light", "dark"] | None = None
+    favorite_tools: list[ToolId] | None = Field(default=None, max_length=12)
 
 
 class AiConnection(Contract):
     command: str
     args: list[str]
     env: dict[str, str]
+
+
+class CodexStatus(Contract):
+    available: bool
+    configured: bool
+    matching: bool
+    message: str
+    configuration: str
+
+
+class ConnectionTest(Contract):
+    connected: Literal[True] = True
+    tool_count: int
+    tested_operations: list[str]
+    message: str
 
 
 class AppError(Exception):

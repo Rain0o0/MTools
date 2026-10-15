@@ -21,6 +21,7 @@ tags: [index, navigation, ai-retrieval]
 | [使用手册索引](guides/README.md) | 源码、桌面、Docker 使用说明入口 |
 | [桌面软件](guides/desktop.md) | Windows 默认独立窗口、成品构建、运行条件 |
 | [AI 连接](features/ai-interop/usage.md) | MCP stdio 接入、范围与排错 |
+| [Git 与版本迭代](guides/versioning.md) | 每批递增 minor、版本同步、提交检查与本地标签 |
 | [源码运行](guides/source.md) | 锁定安装、普通/开发启动、统一检查 |
 | [平台框架](features/platform-shell/overview.md) | 实际契约、安全、模块与扩展边界 |
 | [当前问题](issues/open.md) | 仅存仍未解决且有事实依据的问题 |
@@ -48,6 +49,7 @@ tags: [index, navigation, ai-retrieval]
 | --- | --- |
 | [ADR 索引](adr/README.md) | 重大设计决定与替代关系 |
 | [ADR-0002 桌面与 MCP](adr/0002-desktop-and-mcp.md) | 默认入口、共享执行、权限与兼容性 |
+| [2026-10-15 工具与 Codex](worklog/2026/10/2026-10-15-04-product-tools.md) | 0.2.0、紧凑目录、新工具、常用、图标与版本迭代 |
 | [2026-10-15 桌面与 MCP](worklog/2026/10/2026-10-15-03-desktop-mcp.md) | 桌面成品、Docker 运行、统一 AI 与交互验证 |
 | [ADR-0001 默认架构](adr/0001-modular-local-web-toolbox.md) | 初始技术路线、收益和局限 |
 | [工作记录索引](worklog/README.md) | 按年/月/日期查变更与验证证据 |

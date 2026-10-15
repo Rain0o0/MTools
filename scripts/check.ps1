@@ -10,6 +10,7 @@ function Invoke-Check([string]$Program, [string[]]$Arguments) {
 Invoke-Check uv @('run', '--frozen', 'ruff', 'check')
 Invoke-Check uv @('run', '--frozen', 'ruff', 'format', '--check')
 Invoke-Check uv @('run', '--frozen', 'mypy')
+Invoke-Check uv @('run', '--frozen', 'python', 'scripts/check_version.py')
 Invoke-Check uv @('run', '--frozen', 'pytest', '-q')
 Invoke-Check uv @('run', '--frozen', 'python', 'scripts/export_openapi.py', '--check')
 Invoke-Check uv @('run', '--frozen', 'python', 'scripts/check_docs.py')

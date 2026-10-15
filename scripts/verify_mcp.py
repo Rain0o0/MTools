@@ -20,7 +20,24 @@ async def verify() -> None:
         ) as session:
             await session.initialize()
             tools = (await session.list_tools()).tools
-            assert [tool.name for tool in tools] == ["mtools_json_formatter__format_v1"]
+            assert {tool.name for tool in tools} == {
+                "mtools_json_formatter__format_v1",
+                "mtools_text_diff__compare_v1",
+                "mtools_json_lines__convert_v1",
+                "mtools_text_codec__transform_v1",
+            }
+            for name, arguments, expected in [
+                ("mtools_text_diff__compare_v1", {"old_text": "a\n", "new_text": "a\n"}, ""),
+                ("mtools_json_lines__convert_v1", {"text": '[{"中文":true}]'}, '{"中文":true}\n'),
+                (
+                    "mtools_text_codec__transform_v1",
+                    {"text": "中文", "action": "base64-encode"},
+                    "5Lit5paH",
+                ),
+            ]:
+                called = await session.call_tool(name, arguments)
+                assert not called.isError and called.structuredContent is not None
+                assert called.structuredContent["text"] == expected
             result = await session.call_tool(
                 tools[0].name, {"text": '{"中文":true}', "compact": True}
             )

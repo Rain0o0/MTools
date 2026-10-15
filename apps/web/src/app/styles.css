@@ -239,42 +239,6 @@ main {
   padding: 6px 12px;
   white-space: nowrap;
 }
-.welcome {
-  background: var(--primary-soft);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-panel);
-  padding: 24px 32px;
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  align-items: center;
-  margin-bottom: 28px;
-}
-.welcome h2 {
-  font-size: 24px;
-  margin: 8px 0;
-  font-weight: 600;
-}
-.welcome p {
-  margin: 0;
-}
-.welcome-art {
-  font-family: var(--font-code);
-  font-size: 64px;
-  line-height: 1.1;
-  color: var(--primary);
-  text-align: center;
-  padding-right: 32px;
-  letter-spacing: 10px;
-}
-.welcome-art span {
-  display: block;
-  margin-top: 12px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  letter-spacing: 3px;
-  color: var(--muted);
-}
 .catalog-toolbar {
   display: flex;
   gap: 12px;
@@ -340,16 +304,15 @@ main {
 }
 .tool-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 16px;
 }
 .tool-card {
   position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-panel);
-  padding: 24px;
-  max-width: 420px;
+  padding: 18px;
   transition: box-shadow 0.15s;
 }
 .tool-card:hover {
@@ -359,7 +322,7 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 .tool-icon {
   width: 44px;
@@ -394,7 +357,7 @@ main {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin: 16px 0 22px;
+  margin: 12px 0;
 }
 .tags button {
   color: var(--muted);
@@ -417,6 +380,7 @@ main {
   inset: 0;
   border-radius: var(--radius-panel);
 }
+.tool-card .favorite-toggle,
 .tool-card .badge,
 .tool-card .tags button {
   position: relative;
@@ -731,9 +695,6 @@ dd {
     align-items: flex-start;
     flex-wrap: wrap;
   }
-  .welcome-art {
-    padding: 0;
-  }
 }
 @media (max-width: 700px) {
   .app-layout {
@@ -786,15 +747,6 @@ dd {
     gap: 16px;
     margin-bottom: 24px;
   }
-  .welcome {
-    padding: 24px;
-  }
-  .welcome h2 {
-    font-size: 22px;
-  }
-  .welcome-art {
-    display: none;
-  }
   .editor-grid,
   .help-grid {
     grid-template-columns: 1fr;
@@ -828,4 +780,106 @@ dd {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+.brand-icon {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.compact-heading {
+  margin-bottom: 16px;
+}
+.catalog-heading h1 {
+  font-size: 26px;
+  margin-bottom: 0;
+}
+.favorites-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+  min-height: 40px;
+}
+.favorites-label {
+  color: var(--muted);
+  font-size: 12px;
+  margin-right: 4px;
+}
+.favorite-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius);
+  font-size: 12px;
+}
+.favorite-shortcut:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.favorite-shortcut span {
+  color: var(--primary);
+  font-family: var(--font-code);
+}
+.favorite-toggle {
+  margin-left: auto;
+  margin-right: 8px;
+  padding: 4px 10px;
+  font-size: 20px;
+  color: var(--muted);
+  background: transparent;
+  border-color: transparent;
+}
+.favorite-toggle[aria-pressed='true'] {
+  color: var(--primary);
+}
+.favorite-notice {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.filters {
+  margin-top: 12px;
+  margin-bottom: 16px;
+}
+.codex-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.codex-panel {
+  margin-bottom: 20px;
+}
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.codex-heading h2 {
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+.connection-state {
+  color: var(--primary);
+  font-size: 12px;
+}
+.codex-config {
+  margin-top: 16px;
+}
+.codex-config summary {
+  cursor: pointer;
+  color: var(--primary);
+}
+.codex-config p {
+  margin-top: 12px;
+}
+.comparison-inputs textarea {
+  min-height: 240px;
 }

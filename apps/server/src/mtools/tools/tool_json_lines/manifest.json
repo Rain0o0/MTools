@@ -1,0 +1,45 @@
+{
+  "manifest_version": 1,
+  "tool_id": "json-lines",
+  "version": "1.0.0",
+  "name": "JSON / JSONL 转换",
+  "description": "整理 AI 数据集与批量请求，在 JSON 数组和 JSONL 之间转换。",
+  "category": "开发工具",
+  "tags": [
+    "JSON",
+    "JSONL",
+    "数据集"
+  ],
+  "execution_target": "backend",
+  "supported_modes": [
+    "desktop",
+    "source-web",
+    "docker-web"
+  ],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [
+    {
+      "operation_id": "convert",
+      "title": "转换 JSON / JSONL",
+      "description": "JSON 数组与每行一个 JSON 值的 JSONL 互转，忽略空白行；最多 100000 字符、2000 条记录、64 层嵌套，拒绝重复键和非有限数值。不保存数据；需精确保留的数字请使用字符串。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/JsonLinesParameters",
+      "output_schema": "#/components/schemas/JsonLinesResult",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": true,
+      "timeout_seconds": 5,
+      "max_input_bytes": 800000
+    }
+  ],
+  "ui": {
+    "route": "/tools/json-lines"
+  },
+  "docs": {
+    "overview": "docs/features/json-lines/overview.md",
+    "usage": "docs/features/json-lines/usage.md"
+  }
+}

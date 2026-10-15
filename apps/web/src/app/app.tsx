@@ -14,6 +14,8 @@ import { request, errorText } from '../shared/api';
 import { useDialog } from '../shared/dialog';
 import { ErrorBoundary } from '../shared/error-boundary';
 import { toolPages } from './registry';
+import appIcon from '../assets/mtools.png';
+import { version } from '../../package.json';
 
 type Theme = 'light' | 'dark';
 
@@ -237,11 +239,11 @@ export function App() {
       title: '关于 MTools',
       body: (
         <>
-          <p>MTools 0.1.0 · 让工作更顺手的工具箱。</p>
+          <p>MTools {version} · 让工作更顺手的工具箱。</p>
           <p>
             在一个独立窗口中完成日常处理，也可以将工具连接到自己的 AI 助手。
           </p>
-          <p>目前提供 JSON 格式化，更多工具按统一规则逐步加入。</p>
+          <p>提供文本差异、JSON 整理与转换、编码和摘要，也支持 AI 调用。</p>
         </>
       ),
     });
@@ -250,8 +252,8 @@ export function App() {
     setSaving(true);
     setNotice('');
     request('/preferences', 'Preferences', {
-      method: 'PUT',
-      body: JSON.stringify({ version: 1, theme: value }),
+      method: 'PATCH',
+      body: JSON.stringify({ theme: value }),
     })
       .then(() => setNotice('外观偏好已保存'))
       .catch((value: unknown) =>
@@ -277,7 +279,7 @@ export function App() {
       </a>
       <aside className={`sidebar ${menuOpen ? 'is-open' : ''}`}>
         <Link to="/" className="brand" aria-label="MTools 首页">
-          <span className="brand-mark">M</span>
+          <img className="brand-icon" src={appIcon} alt="" />
           <span>
             MTools<small>让工作更顺手</small>
           </span>
@@ -317,7 +319,7 @@ export function App() {
             {error ? '连接中断 · 点击重试' : 'MTools · 点击了解'}
           </button>
           <button className="version-button" onClick={about}>
-            v0.1.0 · 关于软件
+            v{version} · 关于软件
           </button>
         </div>
       </aside>

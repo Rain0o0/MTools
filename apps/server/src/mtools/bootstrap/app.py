@@ -1,11 +1,8 @@
-import json
-import socket
-import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Annotated, cast
 
+import anyio
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
@@ -13,6 +10,7 @@ from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
 
 from mtools import __version__
+from mtools.adapters.ai_connection import CodexConnector, connection_for, test_connection
 from mtools.adapters.logging import create_logger
 from mtools.adapters.preferences import PreferenceStore
 from mtools.bootstrap.config import Settings
@@ -24,15 +22,21 @@ from mtools.contracts.models import (
     Capabilities,
     Catalog,
     CatalogEntry,
+    CodexStatus,
+    ConnectionTest,
     ErrorInfo,
     ErrorResponse,
     Health,
     Preferences,
+    PreferenceUpdate,
     SessionInfo,
 )
 from mtools.platform.execution import ToolRuntime
 from mtools.platform.session import SessionStore
 from mtools.tools.tool_json_formatter.schemas import JsonExecuteRequest, JsonResult
+from mtools.tools.tool_json_lines.schemas import JsonLinesExecuteRequest, JsonLinesResult
+from mtools.tools.tool_text_codec.schemas import CodecExecuteRequest, CodecResult
+from mtools.tools.tool_text_diff.schemas import DiffExecuteRequest, DiffResult
 
 
 def create_app(settings: Settings | None = None, desktop_token: str | None = None) -> FastAPI:
@@ -56,6 +60,8 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
             app.state.preferences = PreferenceStore(config.data_dir)
             app.state.registry = assemble_tools(config)
             app.state.runtime = ToolRuntime(app.state.registry, logger)
+            app.state.ai_test_lock = anyio.Lock()
+            app.state.codex_lock = anyio.Lock()
             app.state.ready = True
             yield
         finally:
@@ -74,7 +80,7 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
         openapi_url=None,
         responses={
             code: {"model": ErrorResponse}
-            for code in (400, 401, 403, 404, 413, 422, 429, 500, 503, 504)
+            for code in (400, 401, 403, 404, 409, 413, 422, 429, 500, 503, 504)
         },
     )
     app.state.ready = False
@@ -171,24 +177,34 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
         app.state.preferences.save(body)
         return body
 
+    @app.patch("/api/v1/preferences", response_model=Preferences)
+    async def patch_preferences(body: PreferenceUpdate) -> Preferences:
+        current = cast(Preferences, app.state.preferences.value)
+        updated = Preferences.model_validate(
+            {**current.model_dump(), **body.model_dump(exclude_none=True)}
+        )
+        app.state.preferences.save(updated)
+        return updated
+
     @app.get("/api/v1/ai/connection", response_model=AiConnection)
     def ai_connection() -> AiConnection:
-        if config.mode == "docker-web":
-            return AiConnection(
-                command="docker",
-                args=["exec", "-i", socket.gethostname(), sys.executable, "-m", "mtools", "mcp"],
-                env={},
-            )
-        frozen = getattr(sys, "frozen", False)
-        executable = Path(sys.executable)
-        return AiConnection(
-            command=str(executable.with_name("MToolsAI.exe") if frozen else executable),
-            args=["mcp"] if frozen else ["-m", "mtools", "mcp"],
-            env={
-                "MTOOLS_DATA_DIR": str(config.data_dir.resolve()),
-                "MTOOLS_DISABLED_TOOLS": json.dumps(config.disabled_tools),
-            },
-        )
+        return connection_for(config)
+
+    @app.get("/api/v1/ai/codex", response_model=CodexStatus)
+    def codex_status() -> CodexStatus:
+        return CodexConnector(config).status()
+
+    @app.post("/api/v1/ai/codex/connect", response_model=CodexStatus)
+    async def codex_connect() -> CodexStatus:
+        async with app.state.codex_lock:
+            return await anyio.to_thread.run_sync(CodexConnector(config).connect)
+
+    @app.post("/api/v1/ai/test", response_model=ConnectionTest)
+    async def ai_test() -> ConnectionTest:
+        if app.state.ai_test_lock.locked():
+            raise AppError(429, "TEST_IN_PROGRESS", "已有连接测试正在进行，请稍候")
+        async with app.state.ai_test_lock:
+            return await test_connection(config, app.state.registry)
 
     @app.get("/api/v1/tools", response_model=Catalog)
     def catalog(
@@ -218,6 +234,41 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
             "json-formatter", "format", body.parameters.model_dump(), "ui", request.state.request_id
         )
         return cast(JsonResult, result)
+
+    @app.post("/api/v1/tools/text-diff/operations/compare/execute", response_model=DiffResult)
+    async def execute_diff(body: DiffExecuteRequest, request: Request) -> DiffResult:
+        return cast(
+            DiffResult,
+            await app.state.runtime.execute(
+                "text-diff", "compare", body.parameters.model_dump(), "ui", request.state.request_id
+            ),
+        )
+
+    @app.post("/api/v1/tools/json-lines/operations/convert/execute", response_model=JsonLinesResult)
+    async def execute_lines(body: JsonLinesExecuteRequest, request: Request) -> JsonLinesResult:
+        return cast(
+            JsonLinesResult,
+            await app.state.runtime.execute(
+                "json-lines",
+                "convert",
+                body.parameters.model_dump(),
+                "ui",
+                request.state.request_id,
+            ),
+        )
+
+    @app.post("/api/v1/tools/text-codec/operations/transform/execute", response_model=CodecResult)
+    async def execute_codec(body: CodecExecuteRequest, request: Request) -> CodecResult:
+        return cast(
+            CodecResult,
+            await app.state.runtime.execute(
+                "text-codec",
+                "transform",
+                body.parameters.model_dump(),
+                "ui",
+                request.state.request_id,
+            ),
+        )
 
     @app.api_route(
         "/api/{path:path}",

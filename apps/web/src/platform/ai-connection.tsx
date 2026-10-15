@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { errorText, request } from '../shared/api';
+import type { Schemas } from '../shared/api';
 import { useDialog } from '../shared/dialog';
 import { usePlatform } from './context';
 
@@ -56,6 +57,143 @@ function ConnectionDetails() {
   );
 }
 
+function CodexConnection() {
+  const { capabilities } = usePlatform();
+  const [status, setStatus] = useState<Schemas['CodexStatus']>();
+  const [notice, setNotice] = useState('');
+  const [failure, setFailure] = useState('');
+  const [busy, setBusy] = useState(false);
+  const running = useRef(false);
+  async function refresh() {
+    try {
+      setStatus(await request('/ai/codex', 'CodexStatus'));
+      setFailure('');
+    } catch (error) {
+      setFailure(errorText(error));
+    }
+  }
+  useEffect(() => {
+    void refresh();
+  }, []);
+  async function perform(connect: boolean) {
+    if (running.current) return;
+    running.current = true;
+    setBusy(true);
+    setNotice('');
+    setFailure('');
+    try {
+      if (connect) {
+        setStatus(
+          await request('/ai/codex/connect', 'CodexStatus', { method: 'POST' }),
+        );
+        setNotice('已添加 MTools。请重新打开 Codex 会话，再使用工具。');
+      } else {
+        const result = await request('/ai/test', 'ConnectionTest', {
+          method: 'POST',
+        });
+        setNotice(result.message);
+      }
+    } catch (error) {
+      setFailure(errorText(error));
+    } finally {
+      running.current = false;
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="panel codex-panel">
+      <div className="codex-heading">
+        <div>
+          <span className="eyebrow">快捷连接</span>
+          <h2>Codex</h2>
+        </div>
+        <span className="connection-state">
+          {status?.matching ? '配置已添加' : '等待接入'}
+        </span>
+      </div>
+      <p>{status?.message ?? '正在检查 Codex…'}</p>
+      <div className="settings-actions">
+        <button
+          className="primary"
+          disabled={
+            busy ||
+            !status?.available ||
+            status.configured ||
+            capabilities?.mode !== 'desktop'
+          }
+          onClick={() => {
+            void perform(true);
+          }}
+        >
+          添加到 Codex
+        </button>
+        <button
+          disabled={busy}
+          onClick={() => {
+            void perform(false);
+          }}
+        >
+          {busy ? '正在处理…' : '测试连接'}
+        </button>
+        <button
+          disabled={busy}
+          onClick={() => {
+            void refresh();
+          }}
+        >
+          刷新状态
+        </button>
+      </div>
+      <p className="muted-hint">
+        添加会在本机 Codex 配置中新增名为 mtools
+        的连接，保留其他设置。测试只运行内置示例，不发送你的文本、不调用模型。
+      </p>
+      {capabilities?.mode !== 'desktop' && (
+        <p className="muted-hint">
+          自动添加请使用桌面版；当前环境可复制下面的 Codex 专用配置。
+        </p>
+      )}
+      {failure && (
+        <p className="notice error" role="alert">
+          {failure}
+        </p>
+      )}
+      {notice && (
+        <p className="notice success" role="status">
+          {notice}
+        </p>
+      )}
+      <details className="codex-config">
+        <summary>查看 Codex 专用配置</summary>
+        <p>
+          将此连接添加到 Codex 的 MCP 设置或
+          config.toml。已有同名连接时请先核对，不要重复添加。
+        </p>
+        <label htmlFor="codex-config">Codex 连接配置</label>
+        <textarea
+          id="codex-config"
+          className="connection-config"
+          rows={9}
+          readOnly
+          value={status?.configuration ?? ''}
+        />
+        <button
+          disabled={!status || !navigator.clipboard}
+          onClick={() => {
+            if (status)
+              navigator.clipboard
+                .writeText(status.configuration)
+                .then(() => setNotice('Codex 配置已复制'))
+                .catch(() => setFailure('复制未成功，请选中配置手动复制'));
+          }}
+        >
+          复制 Codex 配置
+        </button>
+      </details>
+    </section>
+  );
+}
+
 export function AiPage() {
   const { catalog } = usePlatform();
   const showDialog = useDialog();
@@ -70,6 +208,7 @@ export function AiPage() {
           <p>把工具交给熟悉的 AI，在对话里直接完成操作。</p>
         </div>
       </header>
+      <CodexConnection />
       <section className="panel">
         <h2>让 AI 使用 MTools</h2>
         <p>

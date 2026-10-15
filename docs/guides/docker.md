@@ -26,6 +26,6 @@ docker compose logs --tail 50
 
 默认仅发布宿主回环 8000，非 root UID/GID 10001，应用只读，只有 /data 命名卷及 /tmp tmpfs 可写；禁止提权、移除 capabilities，不挂 Docker socket 或宿主目录。单 worker、真实 Python 健康探针、init/退出宽限与内存/PID/日志限制均在 Compose 声明。此配置不作为公网多用户认证。
 
-卷保存 logs/ 与 preferences.json，无数据库、任务或输入历史。重启和重建保留日志/主题；停止后可备份整个卷，恢复前保持版本一致。未提供文件上传、任意宿主路径访问；下载在使用者设备保存，不代表服务器取得该设备文件权限。
+卷保存 logs/ 与 preferences.json，无数据库、任务或输入历史。重启和重建保留日志、主题与常用工具；停止后可备份整个卷，恢复前保持版本一致。未提供文件上传、任意宿主路径访问；下载在使用者设备保存，不代表服务器取得该设备文件权限。
 
 AI 在“AI 助手”获取同一 Docker 宿主适用的 docker exec -i 配置，重建容器后重新获取。验收命令：pnpm --dir apps/web exec node scripts/verify-delivery.mjs docker；真实协议验证见 [AI 使用](../features/ai-interop/usage.md)。尚未验证 Docker Desktop 之外的平台发行环境、跨版本数据迁移或远程暴露。

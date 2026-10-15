@@ -13,6 +13,9 @@ tags: [features, tools, current-facts]
 | --- | --- | --- | --- |
 | platform-shell / — | 平台前后端框架 | implemented | Windows 桌面、源码浏览器、Docker；[功能](platform-shell/overview.md)、[使用](platform-shell/usage.md) |
 | json-formatter / json-formatter | JSON 格式化 | implemented | Windows 桌面、源码浏览器、Docker、MCP；[功能](json-formatter/overview.md)、[使用](json-formatter/usage.md) |
+| text-diff / text-diff | 文本差异 | implemented | Windows 桌面、源码浏览器、Docker、MCP；[功能](text-diff/overview.md)、[使用](text-diff/usage.md) |
+| json-lines / json-lines | JSON / JSONL 转换 | implemented | Windows 桌面、源码浏览器、Docker、MCP；[功能](json-lines/overview.md)、[使用](json-lines/usage.md) |
+| text-codec / text-codec | 编码与摘要 | implemented | Windows 桌面、源码浏览器、Docker、MCP；[功能](text-codec/overview.md)、[使用](text-codec/usage.md) |
 | ai-interop / — | 统一 AI 工具接口 | implemented | stdio：源码、Windows 目录包、Docker；[功能](ai-interop/overview.md)、[使用](ai-interop/usage.md) |
 
 文件服务、长任务和 AI 副作用授权尚未实现。待实施内容见 [路线图](../project/roadmap.md)。

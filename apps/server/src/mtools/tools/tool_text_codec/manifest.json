@@ -1,0 +1,45 @@
+{
+  "manifest_version": 1,
+  "tool_id": "text-codec",
+  "version": "1.0.0",
+  "name": "编码与摘要",
+  "description": "转换 Base64、URL 编码，或计算文本的 SHA-256 摘要。",
+  "category": "开发工具",
+  "tags": [
+    "Base64",
+    "URL",
+    "SHA-256"
+  ],
+  "execution_target": "backend",
+  "supported_modes": [
+    "desktop",
+    "source-web",
+    "docker-web"
+  ],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [
+    {
+      "operation_id": "transform",
+      "title": "转换文本编码或计算摘要",
+      "description": "对最多 100000 字符的 UTF-8 文本执行 Base64 编解码、URL 组件编解码或 SHA-256。Base64 使用标准字母表且不接受空白；URL 解码保留加号。不是加密，不保存输入或访问网络。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/CodecParameters",
+      "output_schema": "#/components/schemas/CodecResult",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": true,
+      "timeout_seconds": 5,
+      "max_input_bytes": 800000
+    }
+  ],
+  "ui": {
+    "route": "/tools/text-codec"
+  },
+  "docs": {
+    "overview": "docs/features/text-codec/overview.md",
+    "usage": "docs/features/text-codec/usage.md"
+  }
+}

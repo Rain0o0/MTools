@@ -20,7 +20,15 @@ class DesktopService:
 
     def __init__(self, settings: Settings) -> None:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind(("127.0.0.1", 0))
+        for _ in range(64):
+            try:
+                self.socket.bind(("127.0.0.1", 49152 + secrets.randbelow(16384)))
+                break
+            except OSError:
+                continue
+        else:
+            self.socket.close()
+            raise RuntimeError("无法分配本机工作端口，请稍后重新打开 MTools")
         self.port = self.socket.getsockname()[1]
         self.origin = f"http://127.0.0.1:{self.port}"
         self.token = secrets.token_urlsafe(32)
@@ -107,6 +115,12 @@ def run_desktop(settings: Settings) -> None:
                 event.Handled = True
 
             def bind() -> None:
+                icon_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[5]))
+                icon = icon_root / (
+                    "branding/mtools.ico" if getattr(sys, "frozen", False) else "assets/mtools.ico"
+                )
+                if icon.is_file():
+                    native.Icon = import_module("System.Drawing").Icon(str(icon))
                 core = native.webview.CoreWebView2
                 core.NavigationStarting += navigate
                 core.NewWindowRequested += new_window
