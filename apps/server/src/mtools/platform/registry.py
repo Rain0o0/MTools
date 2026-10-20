@@ -110,5 +110,9 @@ class ToolRegistry:
         if entry.status != "available":
             raise AppError(503, "TOOL_UNAVAILABLE", entry.reason or "工具暂不可用")
         if operation_id not in entry.available_operations:
+            if operation_id in self.tools[tool_id].operations:
+                raise AppError(
+                    503, "OPERATION_UNAVAILABLE", "此操作的媒体组件不可用，请重新检测环境"
+                )
             raise AppError(404, "OPERATION_NOT_FOUND", "找不到此操作")
         return self.tools[tool_id].operations[operation_id]

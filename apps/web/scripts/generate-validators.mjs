@@ -20,6 +20,13 @@ const names = [
   'CodecResult',
   'CodexStatus',
   'ConnectionTest',
+  'Artifact',
+  'ArtifactList',
+  'Job',
+  'JobList',
+  'ApprovalList',
+  'MediaEnvironment',
+  'SpeechEnvironment',
 ];
 const ajv = new Ajv({
   strict: false,

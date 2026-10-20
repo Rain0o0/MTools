@@ -15,14 +15,14 @@ def git_text(path: str, revision: str) -> str:
 
 
 def check(staged: bool = False) -> str:
-    """核验版本来源一致；提交时要求相对上一提交递增一个小版本。"""
+    """核验版本来源一致；提交时要求相对上一提交恰好递增一个级别。"""
 
     def read(path: str) -> str:
         return git_text(path, "") if staged else (ROOT / path).read_text("utf-8")
 
     version = str(tomllib.loads(read("pyproject.toml"))["project"]["version"])
-    if not re.fullmatch(r"\d+\.\d+\.0", version):
-        raise ValueError("项目版本须为 major.minor.0；每批更新递增 minor")
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        raise ValueError("项目版本须为 major.minor.patch")
     python_match = re.search(
         r'__version__ = "([\d.]+)"', read("apps/server/src/mtools/__init__.py")
     )
@@ -38,9 +38,32 @@ def check(staged: bool = False) -> str:
         raise ValueError("CHANGELOG.md 缺少本版本更新记录")
     if staged:
         previous = str(tomllib.loads(git_text("pyproject.toml", "HEAD"))["project"]["version"])
-        major, minor, _ = map(int, previous.split("."))
-        if version != f"{major}.{minor + 1}.0":
-            raise ValueError(f"本次提交必须从 {previous} 递增为 {major}.{minor + 1}.0")
+        prior = tuple(map(int, previous.split(".")))
+        current = tuple(map(int, version.split(".")))
+        if current <= prior:
+            raise ValueError(f"本次提交版本须高于上一提交：{previous}")
+        sections = re.findall(r"^## \[(\d+\.\d+\.\d+)\]", read("CHANGELOG.md"), re.MULTILINE)
+        if not sections or sections[0] != version:
+            raise ValueError("CHANGELOG.md 顶部版本必须与项目版本一致")
+        history = sorted(
+            {
+                tuple(map(int, item.split(".")))
+                for item in sections
+                if prior < tuple(map(int, item.split("."))) <= current
+            }
+        )
+        for candidate in history:
+            major, minor, patch = prior
+            allowed = {
+                (major, minor, patch + 1),
+                (major, minor + 1, 0),
+                (major + 1, 0, 0),
+            }
+            if candidate not in allowed:
+                raise ValueError("CHANGELOG.md 的版本历史须由连续的 patch/minor/major 递增组成")
+            prior = candidate
+        if prior != current:
+            raise ValueError("CHANGELOG.md 未包含从上一提交到本版本的完整递增历史")
     return version
 
 

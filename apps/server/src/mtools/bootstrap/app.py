@@ -14,6 +14,7 @@ from mtools.adapters.ai_connection import CodexConnector, connection_for, test_c
 from mtools.adapters.logging import create_logger
 from mtools.adapters.preferences import PreferenceStore
 from mtools.bootstrap.config import Settings
+from mtools.bootstrap.media_routes import register_media_routes
 from mtools.bootstrap.security import SecurityMiddleware, error_response
 from mtools.bootstrap.tools import assemble_tools
 from mtools.contracts.models import (
@@ -32,6 +33,7 @@ from mtools.contracts.models import (
     SessionInfo,
 )
 from mtools.platform.execution import ToolRuntime
+from mtools.platform.media_workspace import MediaWorkspace
 from mtools.platform.session import SessionStore
 from mtools.tools.tool_json_formatter.schemas import JsonExecuteRequest, JsonResult
 from mtools.tools.tool_json_lines.schemas import JsonLinesExecuteRequest, JsonLinesResult
@@ -47,25 +49,37 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
     sessions = SessionStore(config.session_ttl_seconds, config.max_sessions)
     capabilities = Capabilities(
         mode=config.mode,
+        artifact_retention_hours=config.media_retention_hours,
         capabilities={"filesystem": False, "network": False, "clipboard": False},
     )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        logger = create_logger(
-            config.data_dir / "logs", config.log_max_bytes, config.log_backup_count
+        logger = await anyio.to_thread.run_sync(
+            create_logger, config.data_dir / "logs", config.log_max_bytes, config.log_backup_count
         )
         app.state.logger = logger
         try:
-            app.state.preferences = PreferenceStore(config.data_dir)
-            app.state.registry = assemble_tools(config)
-            app.state.runtime = ToolRuntime(app.state.registry, logger)
+            app.state.preferences = await anyio.to_thread.run_sync(PreferenceStore, config.data_dir)
+            app.state.media = await anyio.to_thread.run_sync(
+                MediaWorkspace, config.data_dir, config.media_retention_hours, logger
+            )
+            app.state.media.start()
+            app.state.registry = await anyio.to_thread.run_sync(
+                assemble_tools, config, app.state.media
+            )
+            app.state.runtime = ToolRuntime(app.state.registry, logger, app.state.media.authorize)
+            app.state.upload_lock = anyio.Lock()
             app.state.ai_test_lock = anyio.Lock()
             app.state.codex_lock = anyio.Lock()
+            app.state.preferences_lock = anyio.Lock()
+            app.state.media_check_lock = anyio.Lock()
             app.state.ready = True
             yield
         finally:
             app.state.ready = False
+            if hasattr(app.state, "media"):
+                await anyio.to_thread.run_sync(app.state.media.close)
             sessions.items.clear()
             for handler in logger.handlers[:]:
                 handler.close()
@@ -84,6 +98,7 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
         },
     )
     app.state.ready = False
+    app.state.config = config
 
     class RequestLogger:
         def info(self, message: str, *, extra: dict[str, object]) -> None:
@@ -162,6 +177,16 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
             max_age=config.session_ttl_seconds,
             path="/api/",
         )
+        workspace_cookie, _ = app.state.media.identity(request.cookies.get("mtools_workspace"))
+        response.set_cookie(
+            "mtools_workspace",
+            workspace_cookie,
+            httponly=True,
+            samesite="strict",
+            secure=request.url.scheme == "https",
+            max_age=2_592_000,
+            path="/api/",
+        )
         return SessionInfo(csrf_token=value.csrf_token, expires_in=config.session_ttl_seconds)
 
     @app.get("/api/v1/capabilities", response_model=Capabilities)
@@ -174,16 +199,18 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
 
     @app.put("/api/v1/preferences", response_model=Preferences)
     async def save_preferences(body: Preferences) -> Preferences:
-        app.state.preferences.save(body)
+        async with app.state.preferences_lock:
+            await anyio.to_thread.run_sync(app.state.preferences.save, body)
         return body
 
     @app.patch("/api/v1/preferences", response_model=Preferences)
     async def patch_preferences(body: PreferenceUpdate) -> Preferences:
-        current = cast(Preferences, app.state.preferences.value)
-        updated = Preferences.model_validate(
-            {**current.model_dump(), **body.model_dump(exclude_none=True)}
-        )
-        app.state.preferences.save(updated)
+        async with app.state.preferences_lock:
+            current = cast(Preferences, app.state.preferences.value)
+            updated = Preferences.model_validate(
+                {**current.model_dump(), **body.model_dump(exclude_none=True)}
+            )
+            await anyio.to_thread.run_sync(app.state.preferences.save, updated)
         return updated
 
     @app.get("/api/v1/ai/connection", response_model=AiConnection)
@@ -212,7 +239,8 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
         limit: Annotated[int, Query(ge=1, le=100)] = 50,
     ) -> Catalog:
         entries = sorted(
-            app.state.registry.entries.values(), key=lambda item: item.manifest.tool_id
+            app.state.registry.entries.values(),
+            key=lambda item: (item.manifest.category == "媒体工具", item.manifest.tool_id),
         )
         end = cursor + limit
         return Catalog(
@@ -269,6 +297,8 @@ def create_app(settings: Settings | None = None, desktop_token: str | None = Non
                 request.state.request_id,
             ),
         )
+
+    register_media_routes(app)
 
     @app.api_route(
         "/api/{path:path}",

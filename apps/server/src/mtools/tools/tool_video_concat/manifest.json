@@ -1,0 +1,47 @@
+{
+  "manifest_version": 1,
+  "tool_id": "video-concat",
+  "version": "1.0.0",
+  "name": "视频拼接",
+  "description": "按指定顺序拼接 2–16 段视频，统一分辨率和音轨，输出 MP4。",
+  "category": "媒体工具",
+  "tags": [
+    "视频",
+    "音频",
+    "字幕",
+    "拼接"
+  ],
+  "execution_target": "backend",
+  "supported_modes": [
+    "desktop",
+    "source-web",
+    "docker-web"
+  ],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [
+    {
+      "operation_id": "concat",
+      "title": "拼接视频",
+      "description": "按指定顺序拼接 2–16 段视频，统一分辨率和音轨，输出 MP4。 支持已授权 artifact_id 或本机绝对路径；用户已明确指定文件和动作时，引用任务原话到 user_authorization 直接执行，无需重复确认。原件只读，结果另存；返回 job_id 后用 media-library/status 查询和 read 读取。",
+      "effects": "write",
+      "ai_authorization": "conversation",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/VideoConcat",
+      "output_schema": "#/components/schemas/Job",
+      "execution": "job",
+      "cancellable": true,
+      "idempotent": false,
+      "timeout_seconds": 30,
+      "max_input_bytes": 400000
+    }
+  ],
+  "ui": {
+    "route": "/tools/video-concat"
+  },
+  "docs": {
+    "overview": "docs/features/media-workflows/overview.md",
+    "usage": "docs/features/media-workflows/usage.md"
+  }
+}

@@ -98,6 +98,19 @@ class SecurityMiddleware:
                     ):
                         raise AppError(403, "CSRF_FAILED", "安全校验失败，请重新连接")
             if method not in ("GET", "HEAD", "OPTIONS"):
+                if path == "/api/v1/artifacts/upload" and method == "POST":
+                    received = 0
+
+                    async def bounded_receive() -> Message:
+                        nonlocal received
+                        message = await receive()
+                        received += len(message.get("body", b""))
+                        if received > 268_435_456:
+                            raise AppError(413, "REQUEST_TOO_LARGE", "单文件不能超过 256 MiB")
+                        return message
+
+                    await self.app(scope, bounded_receive, secure_send)
+                    return
                 body = bytearray()
                 while True:
                     message = await receive()

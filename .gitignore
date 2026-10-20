@@ -30,3 +30,7 @@ Thumbs.db
 *.tsbuildinfo
 test-results/
 playwright-report/
+
+# Local development documentation
+/.dev-docs/
+/AGENTS.md

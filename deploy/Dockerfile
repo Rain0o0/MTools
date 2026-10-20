@@ -15,7 +15,12 @@ COPY apps/server/ apps/server/
 RUN uv sync --frozen --no-dev --no-editable
 
 FROM python:3.13.15-slim-bookworm AS runtime
-RUN groupadd --gid 10001 mtools && useradd --uid 10001 --gid mtools --no-create-home mtools \
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o Acquire::Retries=3 update \
+    && apt-get -o Acquire::Retries=3 install --yes --no-install-recommends \
+        ffmpeg=7:5.1.9-0+deb12u1 fonts-noto-cjk=1:20220127+repack1-1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 mtools && useradd --uid 10001 --gid mtools --no-create-home mtools \
     && mkdir -p /data && chown mtools:mtools /data
 WORKDIR /app
 COPY --from=python-build /build/.venv /app/.venv

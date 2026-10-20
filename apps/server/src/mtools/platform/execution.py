@@ -1,20 +1,30 @@
 import json
 import logging
+from collections.abc import Callable
 from typing import Literal
+from uuid import uuid4
 
 from anyio import CapacityLimiter, fail_after, to_thread
 from pydantic import BaseModel, ValidationError
 
 from mtools.contracts.models import AppError
+from mtools.platform.invocation import actor
 from mtools.platform.registry import ToolRegistry
 
 
 class ToolRuntime:
     """让界面和 AI 共用入参、权限、资源上限、结果契约与审计边界。"""
 
-    def __init__(self, registry: ToolRegistry, logger: logging.Logger) -> None:
+    def __init__(
+        self,
+        registry: ToolRegistry,
+        logger: logging.Logger,
+        authorize: Callable[[str, str, dict[str, object]], None] | None = None,
+    ) -> None:
         self.registry, self.logger = registry, logger
         self.limiter = CapacityLimiter(4)
+        self.authorize = authorize
+        self.ai_actor = f"ai:{uuid4().hex}"
 
     async def execute(
         self,
@@ -23,6 +33,7 @@ class ToolRuntime:
         arguments: object,
         source: Literal["ui", "ai"],
         request_id: str,
+        owner: str | None = None,
     ) -> BaseModel:
         handler = self.registry.require(tool_id, operation_id)
         metadata = next(
@@ -30,7 +41,7 @@ class ToolRuntime:
             for item in self.registry.tools[tool_id].manifest.operations
             if item.operation_id == operation_id
         )
-        if source == "ai" and metadata.effects != "read-only":
+        if source == "ai" and metadata.effects != "read-only" and self.authorize is None:
             raise AppError(
                 403, "AI_APPROVAL_REQUIRED", "此操作需要在软件中完成授权后才能由 AI 执行"
             )
@@ -52,7 +63,37 @@ class ToolRuntime:
                 "invocation_source": source,
             },
         )
+        identity = owner or (self.ai_actor if source == "ai" else "ui:test")
+        token = actor.set(identity)
         try:
+            conversation_consent = (
+                metadata.ai_authorization == "conversation"
+                and bool(
+                    getattr(parameters, "source_path", None)
+                    or getattr(parameters, "overlay_source_path", None)
+                    or any(
+                        getattr(item, "source_path", None)
+                        for item in getattr(parameters, "sources", [])
+                    )
+                    or any(
+                        getattr(item, "source_path", None)
+                        for item in getattr(parameters, "watermarks", [])
+                    )
+                )
+                and bool(getattr(parameters, "user_authorization", None))
+            )
+            if (
+                source == "ai"
+                and metadata.effects != "read-only"
+                and self.authorize
+                and not conversation_consent
+            ):
+                await to_thread.run_sync(
+                    self.authorize,
+                    identity,
+                    f"{tool_id}/{operation_id}",
+                    parameters.model_dump(mode="json"),
+                )
             with fail_after(metadata.timeout_seconds):
                 async with self.limiter:
                     result = await to_thread.run_sync(handler, parameters, abandon_on_cancel=True)
@@ -64,3 +105,5 @@ class ToolRuntime:
         except Exception as exc:
             self.logger.error("operation_failed", extra={"request_id": request_id})
             raise AppError(500, "INTERNAL_ERROR", "处理未完成，请凭问题编号联系支持") from exc
+        finally:
+            actor.reset(token)

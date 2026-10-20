@@ -20,12 +20,14 @@ async def verify() -> None:
         ) as session:
             await session.initialize()
             tools = (await session.list_tools()).tools
-            assert {tool.name for tool in tools} == {
+            required = {
                 "mtools_json_formatter__format_v1",
                 "mtools_text_diff__compare_v1",
                 "mtools_json_lines__convert_v1",
                 "mtools_text_codec__transform_v1",
             }
+            assert required <= {tool.name for tool in tools}
+            assert all(tool.name.startswith("mtools_") for tool in tools)
             for name, arguments, expected in [
                 ("mtools_text_diff__compare_v1", {"old_text": "a\n", "new_text": "a\n"}, ""),
                 ("mtools_json_lines__convert_v1", {"text": '[{"中文":true}]'}, '{"中文":true}\n'),

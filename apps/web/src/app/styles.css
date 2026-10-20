@@ -883,3 +883,210 @@ dd {
 .comparison-inputs textarea {
   min-height: 240px;
 }
+
+.media-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.media-input,
+.media-options,
+.media-result,
+.media-environment,
+.media-approvals {
+  padding: var(--space-6);
+  min-width: 0;
+  margin-bottom: var(--space-6);
+}
+.media-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  margin: var(--space-4) auto;
+  object-fit: contain;
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+.media-audio {
+  display: block;
+  width: 100%;
+  margin: var(--space-4) 0;
+}
+.media-upload,
+.media-field {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.media-upload {
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+.media-upload input {
+  max-width: 100%;
+}
+.media-placeholder {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface-soft);
+  border-radius: var(--radius);
+}
+.media-options fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.media-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.video-composition {
+  margin-block: var(--space-4);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.media-options .video-composition-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  margin-block: var(--space-3);
+}
+.video-composition-item legend {
+  max-width: 100%;
+  padding-inline: var(--space-2);
+}
+.video-composition-item .media-row {
+  margin-top: var(--space-3);
+  justify-content: flex-start;
+}
+.video-composition .check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-end: var(--space-3);
+}
+@media (min-width: 1000px) {
+  .video-layout .media-input {
+    position: sticky;
+    top: var(--space-4);
+    align-self: start;
+  }
+}
+.media-field input {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.media-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.media-file-name,
+.media-environment p {
+  overflow-wrap: anywhere;
+}
+.media-approval {
+  border-top: 1px solid var(--border);
+  padding: var(--space-4) 0;
+}
+.media-approval pre {
+  max-height: 260px;
+  overflow: auto;
+  font-family: var(--font-code);
+  background: var(--surface-soft);
+  padding: var(--space-3);
+}
+.media-result .button {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+}
+@media (max-width: 1050px) {
+  .media-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .media-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .media-input,
+  .media-options,
+  .media-result,
+  .media-environment,
+  .media-approvals {
+    padding: var(--space-4);
+  }
+}
+
+.media-upload {
+  position: relative;
+  cursor: pointer;
+}
+.media-upload input[type='file'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.media-upload:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.workflow-sources li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 8px;
+}
+
+.workflow-sources li span {
+  flex: 1;
+  min-width: 120px;
+  overflow-wrap: anywhere;
+}
+.workflow-workspace fieldset {
+  min-inline-size: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+}
+
+.workflow-workspace .media-field {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.workflow-workspace select,
+.workflow-workspace textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.workflow-workspace textarea {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.workflow-workspace .notice {
+  overflow-wrap: anywhere;
+}

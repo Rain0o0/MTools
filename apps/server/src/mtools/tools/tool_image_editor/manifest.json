@@ -1,0 +1,48 @@
+{
+  "manifest_version": 1,
+  "tool_id": "image-editor",
+  "version": "1.0.0",
+  "name": "图片编辑",
+  "description": "裁剪、缩放、旋转图片，叠加图片水印并导出。",
+  "category": "媒体工具",
+  "tags": [
+    "图片",
+    "裁剪",
+    "叠加",
+    "缩放",
+    "旋转"
+  ],
+  "execution_target": "backend",
+  "supported_modes": [
+    "desktop",
+    "source-web",
+    "docker-web"
+  ],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [
+    {
+      "operation_id": "edit",
+      "title": "生成图片",
+      "description": "优先用媒体源目录选择已授权源并传 artifact_id。若当前对话中的用户任务已明确给出本机文件路径和图片处理动作，不要重复询问授权，直接按指令调用，并将相关用户原话填入 user_authorization。只有路径、动作或处理范围确实不清楚或冲突时，才询问缺少的信息；不得扩展到其他文件或操作。路径模式无需 MTools 二次审批；源文件只读，结果另存。裁剪像素区域，旋转后按宽度等比缩放，再叠加图片；透明度 0.01–1，输出 PNG/JPG/WebP。",
+      "ai_authorization": "conversation",
+      "effects": "write",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/ImageEdit",
+      "output_schema": "#/components/schemas/Job",
+      "execution": "job",
+      "cancellable": true,
+      "idempotent": false,
+      "timeout_seconds": 20,
+      "max_input_bytes": 16000
+    }
+  ],
+  "ui": {
+    "route": "/tools/image-editor"
+  },
+  "docs": {
+    "overview": "docs/features/media-tools/overview.md",
+    "usage": "docs/features/media-tools/usage.md"
+  }
+}

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mtools"
-version = "0.2.0"
+version = "1.0.0"
 description = "模块化本地网页工具箱"
 requires-python = ">=3.13,<3.14"
 dependencies = [
@@ -15,6 +15,7 @@ dependencies = [
   "platformdirs>=4,<5",
   "mcp>=1.26,<2",
   "pywebview>=6,<7 ; sys_platform == 'win32'",
+  "edge-tts==7.3.1",
 ]
 
 [project.scripts]
@@ -45,4 +46,3 @@ python_version = "3.13"
 strict = true
 plugins = ["pydantic.mypy"]
 files = ["apps/server/src", "scripts", "tests/server"]
-

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     session_ttl_seconds: int = Field(default=28_800, ge=60, le=86_400)
     max_sessions: int = Field(default=128, ge=1, le=1024)
     max_request_bytes: int = Field(default=1_048_576, ge=1024, le=4_194_304)
+    media_retention_hours: int = Field(default=24, ge=1, le=168)
     log_max_bytes: int = Field(default=2_000_000, ge=1024)
     log_backup_count: int = Field(default=3, ge=1, le=10)
 

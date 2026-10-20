@@ -1,0 +1,60 @@
+{
+  "manifest_version": 1,
+  "tool_id": "speech-transcriber",
+  "version": "1.0.0",
+  "name": "音视频转字幕",
+  "description": "使用本地 Whisper 识别音频或视频中的指定音频流，输出 SRT 或 WebVTT。",
+  "category": "媒体工具",
+  "tags": [
+    "视频",
+    "音频",
+    "字幕",
+    "Whisper"
+  ],
+  "execution_target": "backend",
+  "supported_modes": [
+    "desktop",
+    "source-web",
+    "docker-web"
+  ],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [
+    {
+      "operation_id": "transcribe",
+      "title": "生成字幕",
+      "description": "使用本地 Whisper 识别音频或视频中的指定音频流，输出 SRT 或 WebVTT。 支持已授权 artifact_id 或本机绝对路径；用户已明确指定文件和动作时，引用任务原话到 user_authorization 直接执行，无需重复确认。原件只读，结果另存；返回 job_id 后用 media-library/status 查询和 read 读取。 只使用本地 Whisper 模型，默认 base；无模型时提示官方下载安装，不自动下载。audio_stream 是从 0 开始的音频流序号。",
+      "effects": "write",
+      "ai_authorization": "conversation",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/SpeechTranscribe",
+      "output_schema": "#/components/schemas/Job",
+      "execution": "job",
+      "cancellable": true,
+      "idempotent": false,
+      "timeout_seconds": 30,
+      "max_input_bytes": 400000
+    },
+    {
+      "operation_id": "environment",
+      "title": "查看语音环境",
+      "description": "只读查询本地 Whisper 模型、Qwen CustomVoice 与 Edge TTS 安装状态及官方链接；不加载权重或下载模型。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/EmptyParameters",
+      "output_schema": "#/components/schemas/SpeechEnvironment",
+      "idempotent": true,
+      "timeout_seconds": 10,
+      "max_input_bytes": 1000
+    }
+  ],
+  "ui": {
+    "route": "/tools/speech-transcriber"
+  },
+  "docs": {
+    "overview": "docs/features/media-workflows/overview.md",
+    "usage": "docs/features/media-workflows/usage.md"
+  }
+}

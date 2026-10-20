@@ -8,6 +8,8 @@ from PyInstaller.utils.win32.versioninfo import (
 
 root = Path(SPECPATH).parent
 version = tomllib.loads((root / 'pyproject.toml').read_text('utf-8'))['project']['version']
+if Path(DISTPATH).resolve() != (root / 'dist/desktop' / f'v{version}').resolve():
+    raise SystemExit('桌面包必须输出标准版本目录，请使用 scripts/build-desktop.ps1；禁止功能后缀目录。')
 version_tuple = tuple(int(part) for part in version.split('.')) + (0,)
 version_info = VSVersionInfo(
     ffi=FixedFileInfo(filevers=version_tuple, prodvers=version_tuple, mask=0x3f, flags=0,
@@ -21,13 +23,14 @@ version_info = VSVersionInfo(
     ],
 )
 webview_data, webview_bins, webview_imports = collect_all('webview')
+edge_data, edge_bins, edge_imports = collect_all('edge_tts')
 mcp_data = collect_data_files('mcp')
 analysis = Analysis(
     [str(root / 'apps/desktop/entry.py')],
     pathex=[str(root / 'apps/server/src')],
-    binaries=webview_bins,
-    datas=webview_data + mcp_data + collect_data_files('mtools') + [(str(root / 'apps/web/dist'), 'web'), (str(root / 'assets/mtools.ico'), 'branding')],
-    hiddenimports=webview_imports,
+    binaries=webview_bins + edge_bins,
+    datas=webview_data + edge_data + mcp_data + collect_data_files('mtools') + [(str(root / 'apps/web/dist'), 'web'), (str(root / 'assets/mtools.ico'), 'branding'), (str(root / 'apps/server/src/mtools/adapters/speech_worker.py'), 'mtools/adapters')],
+    hiddenimports=webview_imports + edge_imports,
     excludes=['pytest', 'mypy', 'ruff'],
 )
 archive = PYZ(analysis.pure)

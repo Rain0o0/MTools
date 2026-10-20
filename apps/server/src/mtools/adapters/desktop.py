@@ -77,17 +77,48 @@ class DesktopService:
         return f"{candidate.scheme}://{candidate.netloc}" == self.origin
 
 
+class DesktopBridge:
+    """由桌面原生窗口挑选用户主动选择的本机媒体文件。"""
+
+    def __init__(self, window: Any = None) -> None:
+        self._window = window
+
+    def select_media_file(self, kind: str) -> str | None:
+        import webview
+
+        filters = {
+            "image": ("图片文件 (*.png;*.jpg;*.jpeg;*.webp)",),
+            "video": ("视频文件 (*.mp4;*.mov;*.mkv;*.webm)",),
+            "audio": ("音频文件 (*.mp3;*.wav;*.flac;*.ogg;*.m4a)",),
+        }
+        if kind not in filters or self._window is None:
+            raise ValueError("不支持此媒体类型")
+        selected = self._window.create_file_dialog(
+            webview.FileDialog.OPEN, allow_multiple=False, file_types=filters[kind]
+        )
+        return str(selected[0]) if selected else None
+
+
 def run_desktop(settings: Settings) -> None:
     """在 Windows WebView2 窗口内运行同一前端，不启动常规浏览器。"""
     if sys.platform != "win32":
         raise RuntimeError("此桌面版本目前支持 Windows，请使用已验证的运行环境")
     import webview
 
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("MTools.Desktop")
+    icon_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[5]))
+    icon = icon_root / (
+        "branding/mtools.ico" if getattr(sys, "frozen", False) else "assets/mtools.ico"
+    )
+    if not icon.is_file():
+        raise RuntimeError("软件图标文件不完整，请重新构建或安装完整目录包")
+
     if not (settings.web_dir / "index.html").is_file():
         raise RuntimeError("软件界面文件不完整，请重新安装或完成桌面构建")
     service = DesktopService(settings)
     try:
         service.start()
+        bridge = DesktopBridge()
         window = webview.create_window(
             "MTools",
             service.origin,
@@ -96,9 +127,11 @@ def run_desktop(settings: Settings) -> None:
             min_size=(720, 540),
             text_select=True,
             zoomable=True,
+            js_api=bridge,
         )
         if window is None:
             raise RuntimeError("无法创建应用窗口，请检查 Windows WebView2 运行环境")
+        bridge._window = window
 
         def protect_request(request: Any) -> None:
             if service.trusted_url(str(request.url)):
@@ -115,12 +148,6 @@ def run_desktop(settings: Settings) -> None:
                 event.Handled = True
 
             def bind() -> None:
-                icon_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[5]))
-                icon = icon_root / (
-                    "branding/mtools.ico" if getattr(sys, "frozen", False) else "assets/mtools.ico"
-                )
-                if icon.is_file():
-                    native.Icon = import_module("System.Drawing").Icon(str(icon))
                 core = native.webview.CoreWebView2
                 core.NavigationStarting += navigate
                 core.NewWindowRequested += new_window
@@ -136,7 +163,11 @@ def run_desktop(settings: Settings) -> None:
         profile = settings.data_dir / "webview"
         profile.mkdir(parents=True, exist_ok=True)
         webview.start(
-            gui="edgechromium", debug=False, private_mode=False, storage_path=str(profile)
+            gui="edgechromium",
+            debug=False,
+            private_mode=False,
+            storage_path=str(profile),
+            icon=str(icon),
         )
     finally:
         service.close()

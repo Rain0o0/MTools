@@ -15,6 +15,7 @@ from mtools.bootstrap.app import create_app
 from mtools.bootstrap.config import Settings
 from mtools.bootstrap.tools import assemble_tools
 from mtools.platform.execution import ToolRuntime
+from mtools.platform.media_workspace import MediaWorkspace
 
 
 def test_desktop_credentials_and_shutdown(tmp_path: Path) -> None:
@@ -56,7 +57,11 @@ def test_mcp_stdio_real_client(tmp_path: Path) -> None:
             async with ClientSession(reader, writer) as session:
                 await session.initialize()
                 tools = (await session.list_tools()).tools
-                assert len(tools) == 4
+                registry = assemble_tools(Settings(data_dir=tmp_path), MediaWorkspace(tmp_path))
+                expected = sum(
+                    len(entry.available_operations) for entry in registry.entries.values()
+                )
+                assert len(tools) == expected
                 tool = tools[0]
                 assert tool.name == "mtools_json_formatter__format_v1"
                 assert tool.inputSchema["additionalProperties"] is False

@@ -44,19 +44,23 @@ async function rawRequest<K extends ResponseSchema>(
   options: RequestInit = {},
 ): Promise<Schemas[K]> {
   const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), 15_000);
+  const timer = window.setTimeout(
+    () => controller.abort(),
+    path.startsWith('/artifacts/upload') ? 120_000 : 30_000,
+  );
   const abort = () => controller.abort();
   if (options.signal?.aborted) controller.abort();
   options.signal?.addEventListener('abort', abort, { once: true });
   try {
+    const headers = new Headers(options.headers);
+    if (!headers.has('Content-Type'))
+      headers.set('Content-Type', 'application/json');
+    if (csrfToken) headers.set('X-CSRF-Token', csrfToken);
     const response = await fetch(`/api/v1${path}`, {
       ...options,
       credentials: 'same-origin',
       signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
-      },
+      headers,
     });
     const payload: unknown = await response.json();
     if (!response.ok) {

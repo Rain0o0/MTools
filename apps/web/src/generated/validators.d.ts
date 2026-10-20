@@ -15,3 +15,10 @@ export const JsonLinesResult: ValidateFunction<components['schemas']['JsonLinesR
 export const CodecResult: ValidateFunction<components['schemas']['CodecResult']>;
 export const CodexStatus: ValidateFunction<components['schemas']['CodexStatus']>;
 export const ConnectionTest: ValidateFunction<components['schemas']['ConnectionTest']>;
+export const Artifact: ValidateFunction<components['schemas']['Artifact']>;
+export const ArtifactList: ValidateFunction<components['schemas']['ArtifactList']>;
+export const Job: ValidateFunction<components['schemas']['Job']>;
+export const JobList: ValidateFunction<components['schemas']['JobList']>;
+export const ApprovalList: ValidateFunction<components['schemas']['ApprovalList']>;
+export const MediaEnvironment: ValidateFunction<components['schemas']['MediaEnvironment']>;
+export const SpeechEnvironment: ValidateFunction<components['schemas']['SpeechEnvironment']>;

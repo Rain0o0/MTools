@@ -17,7 +17,7 @@ from mtools.platform.registry import operation_name
 
 
 class McpGateway:
-    """从受信任注册器自动投影 MCP；不接受任意路径、代码或浏览器会话。"""
+    """从受信任注册器自动投影 MCP；路径仅通过明示对话授权的媒体契约处理。"""
 
     def __init__(self, runtime: ToolRuntime) -> None:
         self.runtime = runtime

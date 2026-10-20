@@ -1,16 +1,16 @@
 # MTools
 
-一个可持续扩展、支持模块复用的工具箱项目。目标是在桌面内嵌网页中使用，也能从源码运行或通过 Docker 在浏览器中使用。
+MTools 是一款本地运行的工具箱，提供文本、JSON、图片、音频和视频处理，并支持通过 MCP 连接 AI 客户端。项目面向 Windows 桌面使用，也可从源码运行或通过 Docker 在浏览器中使用。
 
-## 当前状态
+## 开始使用
 
-2026-10-15：Windows 独立桌面软件、FastAPI/React 共享核心和统一 MCP 已实现，当前版本 0.2.0，提供紧凑工具目录、常用快捷入口、设置、帮助、JSON 格式化、文本差异、JSON/JSONL 转换、编码与摘要。AI 助手支持 Codex 快捷添加与真实连接测试；软件使用橙色外层、黄色 M 图标。卡片、标签、状态、隐私与帮助可直接操作，主题保存到应用数据目录。
+### Windows 桌面
 
-Windows 目录包与 Docker 已在本机完成真实运行验证；文件上传、持久长任务和 AI 写入授权尚未实现。具体实现状态以 [项目现状](docs/project/status.md) 和 [功能索引](docs/features/README.md) 为准。
+从项目的 GitHub Releases 下载 Windows 目录包，解压后运行 `MTools.exe`。请保留解压目录中的全部文件。媒体编辑需要 FFmpeg；语音转录和配音可能需要额外模型或网络服务。
 
-## 快速启动
+### 从源码运行
 
-使用 Python 3.13、uv、Node 24.12+（24 系列）与 pnpm 11.22.0，在仓库根目录执行：
+需要 Python 3.13、uv、Node.js 24 和 pnpm 11。在项目根目录运行：
 
 ```powershell
 uv sync --frozen
@@ -19,35 +19,24 @@ pnpm --dir apps/web build
 uv run --frozen mtools
 ```
 
-命令直接打开 MTools 独立窗口，在目录选择“JSON 格式化”。已构建的 Windows 程序位于 dist/desktop/MTools/MTools.exe，保持整个目录完整；[桌面指南](docs/guides/desktop.md) 说明打包与运行条件。[AI 接入](docs/features/ai-interop/usage.md) 也可在软件“AI 助手”页面获取。完整步骤、开发模式和验证入口见 [源码指南](docs/guides/source.md)。
+默认启动桌面窗口。运行 `uv run --frozen mtools serve` 可使用浏览器模式，然后访问 http://127.0.0.1:8000。
 
-## 从哪里开始
+### Docker
 
-| 需求 | 入口 |
-| --- | --- |
-| AI/开发者进入项目 | [AGENTS.md](AGENTS.md) |
-| 查找专项规范与记录 | [文档总索引](docs/README.md) |
-| 理解分层与默认技术路线 | [架构规范](docs/standards/architecture.md) |
-| 增加工具或复用已有能力 | [工具接入规范](docs/standards/tool-development.md) |
-| 查看近期实施建议 | [待实施路线](docs/project/roadmap.md) |
-| 查找当前缺陷 | [当前问题](docs/issues/open.md) |
-| 版本迭代 | [Git 与版本规则](docs/guides/versioning.md) |
-| 查看更新 | [变更日志](CHANGELOG.md) |
+需要 Docker Compose。在项目根目录运行：
 
-## 技术方向
+```powershell
+docker compose up -d --build
+```
 
-- 后端 Python + FastAPI，前端 React + TypeScript + Vite，按功能组织模块。
-- 本机默认使用 pywebview/WebView2 独立窗口；Docker 提供网页与后端，不依赖桌面图形环境。
-- 首期采用受信任工具随应用构建的方式，新增工具允许重新构建和重启。运行时安装第三方插件不属于首期承诺。
-- 复用依赖稳定契约和共享能力；桌面专属能力通过运行环境适配器实现。
-- 精确版本、启动和检查命令见源码指南，配置与数据路径见 [配置说明](docs/guides/configuration.md)。
+然后打开 http://127.0.0.1:18743。停止服务运行 `docker compose down`。
 
-## 文档约定
+## 第一步
 
-当前事实按功能维护，变更事实按日期维护。已修复问题从当前问题清单删除；历史变更只保留必要摘要和验证结果。中文文档采用 UTF-8。
+打开 MTools 后，从工具目录搜索或选择一个工具；例如选择“JSON 格式化”，粘贴 JSON 并查看结果。媒体处理可导入文件后选择操作并导出结果。AI 客户端连接步骤见[AI 接入指南](docs/features/ai-interop/usage.md)。
 
-## 使用与交付
+更多安装和配置说明见[使用指南](docs/guides/README.md)，功能列表见[功能索引](docs/features/README.md)，版本变化见[变更日志](CHANGELOG.md)。
 
-源码、桌面与 Docker 使用说明在 [使用手册索引](docs/guides/README.md)。浏览器开发服务显式运行 uv run --frozen mtools serve；Docker 保留浏览器使用方式。新增工具须遵守 [MCP 规范](docs/standards/mcp.md)，每项操作都需可由 AI 调用。
+## 开发与版本
 
-项目尚未指定许可证；首次对外分发前需确定代码及第三方依赖的授权条件。
+开发者：版本号需同步 Python、前端和锁文件；每次迭代更新变更日志、运行检查，并提交到本地 Git。

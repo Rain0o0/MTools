@@ -26,12 +26,13 @@ class Operation(Contract):
     title: str
     description: str
     effects: Literal["read-only", "write", "destructive", "external"]
+    ai_authorization: Literal["software-approval", "conversation"] = "software-approval"
     ai_callable: Literal[True]
     contract_version: Literal[1] = 1
     input_schema: str
     output_schema: str
-    execution: Literal["sync"] = "sync"
-    cancellable: Literal[False] = False
+    execution: Literal["sync", "job"] = "sync"
+    cancellable: bool = False
     idempotent: bool
     timeout_seconds: int = Field(ge=1, le=30)
     max_input_bytes: int = Field(ge=1)
@@ -85,8 +86,9 @@ class Catalog(Contract):
 class Capabilities(Contract):
     mode: RunMode
     capabilities: dict[str, bool]
-    jobs_supported: Literal[False] = False
-    artifacts_supported: Literal[False] = False
+    jobs_supported: bool = True
+    artifacts_supported: bool = True
+    artifact_retention_hours: int = Field(default=24, ge=1, le=168)
 
 
 class SessionInfo(Contract):

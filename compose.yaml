@@ -4,7 +4,9 @@ services:
       context: .
       dockerfile: deploy/Dockerfile
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:18743:8000"
+    environment:
+      MTOOLS_ALLOWED_ORIGINS: '["http://127.0.0.1:18743","http://localhost:18743"]'
     volumes:
       - mtools-data:/data
     init: true

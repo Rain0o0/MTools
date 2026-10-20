@@ -1,0 +1,151 @@
+{
+  "manifest_version": 1,
+  "tool_id": "media-library",
+  "version": "1.1.0",
+  "name": "媒体文件与任务",
+  "description": "查看 AI 可用媒体源、处理任务与结果，管理临时媒体文件。",
+  "category": "媒体工具",
+  "tags": [
+    "媒体",
+    "文件",
+    "任务",
+    "下载"
+  ],
+  "execution_target": "backend",
+  "supported_modes": [
+    "desktop",
+    "source-web",
+    "docker-web"
+  ],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [
+    {
+      "operation_id": "environment",
+      "title": "查看媒体与显卡状态",
+      "description": "查看媒体组件是否可用及自动选择的视频硬件编码方式，复用本机已实测的检测结果，不读取媒体文件。视频编辑会自动使用可用显卡；不支持时使用 CPU，编码失败可自动回退。完成后的 Job.video_processing 返回实际编码方式与是否发生回退；裁剪、叠加和音频仍由 CPU 处理。安装组件或更新驱动后，可在 MTools 任务页重新检测。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/EmptyParameters",
+      "output_schema": "#/components/schemas/MediaEnvironment",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": true,
+      "timeout_seconds": 20,
+      "max_input_bytes": 16000
+    },
+    {
+      "operation_id": "import",
+      "title": "导入小文件",
+      "description": "仅适用于小文件：Base64 不超过 700000 字符。大文件请让用户在 MTools 中选择本机原文件或资源库文件并共享给 AI；本机引用不复制原文件，MCP 不接受路径。导入仍需软件逐次授权。",
+      "effects": "write",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/ImportMedia",
+      "output_schema": "#/components/schemas/Artifact",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": false,
+      "timeout_seconds": 20,
+      "max_input_bytes": 950000
+    },
+    {
+      "operation_id": "sources",
+      "title": "查看可用媒体源",
+      "description": "列出当前 AI 会话自己导入或用户明确共享的媒体源，包括本机原文件引用和资源库文件。只返回不含本机路径的文件编号；将 artifact_id 传给图片、视频或音频编辑操作。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/EmptyParameters",
+      "output_schema": "#/components/schemas/ArtifactList",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": true,
+      "timeout_seconds": 20,
+      "max_input_bytes": 16000
+    },
+    {
+      "operation_id": "read",
+      "title": "读取文件",
+      "description": "按产物 ID 分块读取已授权文件，每块至多 393216 字节，以 Base64 返回。仅可读取当前 AI 导入/生成或用户明确共享的文件；不接受宿主路径。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/ReadArtifact",
+      "output_schema": "#/components/schemas/ArtifactChunk",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": true,
+      "timeout_seconds": 20,
+      "max_input_bytes": 16000
+    },
+    {
+      "operation_id": "jobs",
+      "title": "查看任务",
+      "description": "查看当前会话最近 50 个任务，不显示其他会话任务。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/EmptyParameters",
+      "output_schema": "#/components/schemas/JobList",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": true,
+      "timeout_seconds": 20,
+      "max_input_bytes": 16000
+    },
+    {
+      "operation_id": "status",
+      "title": "查询任务",
+      "description": "按任务 ID 查询当前会话的状态和结果；未完成时可以稍后再次查询。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/ResourceRef",
+      "output_schema": "#/components/schemas/Job",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": true,
+      "timeout_seconds": 20,
+      "max_input_bytes": 16000
+    },
+    {
+      "operation_id": "cancel",
+      "title": "取消任务",
+      "description": "取消当前会话任务；执行中进入取消中，实际终止后才显示已取消。需要软件逐次授权。",
+      "effects": "write",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/ResourceRef",
+      "output_schema": "#/components/schemas/Job",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": false,
+      "timeout_seconds": 20,
+      "max_input_bytes": 16000
+    },
+    {
+      "operation_id": "clear",
+      "title": "清理记录与文件",
+      "description": "清除当前会话已结束记录及未被运行任务引用的临时副本；资源库文件和本机原文件引用会保留，下载文件不受影响。需要软件逐次授权。",
+      "effects": "destructive",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/EmptyParameters",
+      "output_schema": "#/components/schemas/JobList",
+      "execution": "sync",
+      "cancellable": false,
+      "idempotent": false,
+      "timeout_seconds": 20,
+      "max_input_bytes": 16000
+    }
+  ],
+  "ui": {
+    "route": "/tools/media-library"
+  },
+  "docs": {
+    "overview": "docs/features/media-tools/overview.md",
+    "usage": "docs/features/media-tools/usage.md"
+  }
+}

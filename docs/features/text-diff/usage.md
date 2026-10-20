@@ -17,4 +17,4 @@ tags: [tools, development, usage]
 
 原始文本 `a\nb\n`、修改后文本 `a\n中文\n`：新增 1 行、删除 1 行。超过行数返回 TOO_MANY_LINES，缩短后重试。最后一行缺少换行会显示标准 No newline at end of file 标记。
 
-工具在当前 MTools 环境中处理文本，不自动保存历史。离开或刷新前保留结果；错误时输入保留。通过 AI 调用时结果交给所连接的客户端，见 [AI 使用](../ai-interop/usage.md)。完整参数和限制见 [功能说明](overview.md)。
+工具在当前 MTools 环境中处理文本，不自动保存历史。离开或刷新前保留结果；错误时输入保留。通过 AI 调用时结果交给所连接的客户端，见 [AI 使用](../ai-interop/usage.md)。。

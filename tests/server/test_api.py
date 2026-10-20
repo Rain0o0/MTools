@@ -35,11 +35,11 @@ def test_catalog_contract_and_real_operation(authenticated: TestClient) -> None:
     assert entry["manifest"]["tool_id"] == "json-formatter"
     assert entry["available_operations"] == ["format"]
     assert entry["status"] == "available"
-    assert len(authenticated.get("/api/v1/tools?cursor=1").json()["items"]) == 3
-    assert authenticated.get("/api/v1/tools?cursor=4").json()["items"] == []
+    assert len(authenticated.get("/api/v1/tools?cursor=1").json()["items"]) == 10
+    assert authenticated.get("/api/v1/tools?cursor=11").json()["items"] == []
     assert authenticated.get("/api/v1/tools?limit=101").status_code == 422
     capabilities = authenticated.get("/api/v1/capabilities").json()
-    assert capabilities["jobs_supported"] is False
+    assert capabilities["jobs_supported"] is True
     result = authenticated.post(
         EXECUTE,
         json={

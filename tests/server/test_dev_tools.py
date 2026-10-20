@@ -165,7 +165,10 @@ def test_preference_partial_updates_keep_other_values(authenticated: TestClient)
 def test_real_connection_test_endpoint(authenticated: TestClient) -> None:
     response = authenticated.post("/api/v1/ai/test")
     assert response.status_code == 200, response.text
-    assert response.json()["tool_count"] == 4
+    catalog = authenticated.get("/api/v1/tools").json()["items"]
+    assert response.json()["tool_count"] == sum(
+        len(item["available_operations"]) for item in catalog
+    )
     assert len(response.json()["tested_operations"]) == 4
     assert authenticated.post("/api/v1/ai/codex/connect").status_code == 403
 

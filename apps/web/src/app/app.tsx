@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import {
   Link,
   NavLink,
@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom';
 import { AiPage } from '../platform/ai-connection';
 import { CatalogPage } from '../platform/catalog';
+import { MediaEnvironmentPanel } from '../platform/media-environment';
 import { usePlatform } from '../platform/context';
 import { request, errorText } from '../shared/api';
 import { useDialog } from '../shared/dialog';
@@ -16,6 +17,8 @@ import { ErrorBoundary } from '../shared/error-boundary';
 import { toolPages } from './registry';
 import appIcon from '../assets/mtools.png';
 import { version } from '../../package.json';
+
+const JobsPage = lazy(() => import('../platform/media-jobs'));
 
 type Theme = 'light' | 'dark';
 
@@ -37,6 +40,15 @@ function ToolRoute() {
       <section className="empty">
         <h1>{entry.manifest.name}</h1>
         <p>{entry.reason}</p>
+        {[
+          'image-editor',
+          'video-editor',
+          'audio-editor',
+          'media-library',
+          'video-concat',
+          'speech-transcriber',
+          'subtitle-speaker',
+        ].includes(entry.manifest.tool_id) && <MediaEnvironmentPanel />}
         <Link to="/">返回目录</Link>
       </section>
     );
@@ -65,32 +77,6 @@ function NotFound() {
       <p>回到工具目录，重新选择你需要的工具。</p>
       <Link to="/">返回工具目录</Link>
     </section>
-  );
-}
-
-function JobsPage() {
-  return (
-    <>
-      <header className="page-heading">
-        <div>
-          <p className="eyebrow">安心处理手头的事</p>
-          <h1>任务</h1>
-          <p>需要等待的工作，会在这里集中查看。</p>
-        </div>
-      </header>
-      <section className="empty">
-        <span className="empty-symbol" aria-hidden="true">
-          ◷
-        </span>
-        <h2>暂时没有需要等待的任务</h2>
-        <p>目前的工具会直接给出结果，在工具页就能查看、复制或保存。</p>
-        <Link to="/">选一个工具开始 →</Link>
-      </section>
-      <details className="tool-help">
-        <summary>这里会保存我的处理记录吗？</summary>
-        <p>当前版本不保存任务历史。需要保留的结果，请在离开工具页前下载。</p>
-      </details>
-    </>
   );
 }
 
@@ -131,7 +117,7 @@ function HelpPage() {
       <details className="tool-help">
         <summary>结果怎样保存？</summary>
         <p>
-          点击工具里的“复制”或“下载”。刷新或离开工具页会清空当前输入和结果，请先保存需要的内容。
+          文本结果可复制或下载，离开工具页后草稿会清空。媒体处理会保留任务和文件，可在“任务与文件”查看、下载或清理，过期后自动删除。
         </p>
       </details>
     </>
@@ -195,7 +181,7 @@ function SettingsPage({
                 body: (
                   <>
                     <p>
-                      工具输入不保存为历史记录，下载文件由你选择保存位置。主题等偏好存放在软件自己的数据目录。
+                      文本工具不保存输入历史；媒体原文件、处理结果和任务保存在这台设备的数据目录，可在“任务与文件”清理。下载文件由你选择保存位置，主题等偏好也会保存在设备上。
                     </p>
                     <p>软件不会自动上传文件、收集使用内容或连接 AI 服务。</p>
                   </>
@@ -350,7 +336,14 @@ export function App() {
           <Routes>
             <Route path="/" element={<CatalogPage />} />
             <Route path="/tools/:toolId" element={<ToolRoute />} />
-            <Route path="/jobs" element={<JobsPage />} />
+            <Route
+              path="/jobs"
+              element={
+                <Suspense fallback={<p role="status">正在读取任务…</p>}>
+                  <JobsPage />
+                </Suspense>
+              }
+            />
             <Route path="/ai" element={<AiPage />} />
             <Route
               path="/settings"

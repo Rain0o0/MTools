@@ -7,6 +7,12 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const root = resolve(import.meta.dirname, '../../..');
 const mode = process.argv[2] ?? 'docker';
+const version = JSON.parse(
+  await readFile(resolve(root, 'apps/web/package.json'), 'utf8'),
+).version;
+const desktopDirectory =
+  process.env.MTOOLS_DESKTOP_DIR ??
+  resolve(root, `dist/desktop/v${version}/MTools`);
 const native = mode === 'desktop';
 let processHandle;
 let exited;
@@ -47,9 +53,9 @@ try {
   if (native) {
     await mkdir(data, { recursive: true });
     const codexData = await mkdtemp(resolve(root, '.runtime/codex-delivery-'));
-    processHandle = spawn(resolve(root, 'dist/desktop/MTools/MTools.exe'), [], {
+    processHandle = spawn(resolve(desktopDirectory, 'MTools.exe'), [], {
       cwd: data,
-      windowsHide: true,
+      windowsHide: false,
       env: {
         ...process.env,
         MTOOLS_DATA_DIR: data,
@@ -78,7 +84,8 @@ try {
   const page = native ? context.pages()[0] : await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  if (!native) await page.goto('http://127.0.0.1:8000/');
+  if (!native)
+    await page.goto(process.env.MTOOLS_DOCKER_URL ?? 'http://127.0.0.1:18743/');
   await expect(
     page.getByRole('heading', { name: '工具目录', exact: true }),
   ).toBeVisible();
@@ -99,7 +106,7 @@ try {
     fullPage: true,
     path: resolve(
       root,
-      `docs/assets/platform-shell/2026-10-15-v02-${mode}-catalog.png`,
+      `docs/assets/platform-shell/2026-10-20-v${version}-${mode}-catalog.png`,
     ),
   });
   await page.getByRole('link', { name: '打开工具' }).first().click();
@@ -111,7 +118,7 @@ try {
   await page.screenshot({
     path: resolve(
       root,
-      `docs/assets/platform-shell/2026-10-15-v02-${mode}-json.png`,
+      `docs/assets/platform-shell/2026-10-20-v${version}-${mode}-json.png`,
     ),
   });
   if (!native) {
@@ -148,7 +155,7 @@ try {
   await page.screenshot({
     path: resolve(
       root,
-      `docs/assets/platform-shell/2026-10-15-v02-${mode}-ai.png`,
+      `docs/assets/platform-shell/2026-10-20-v${version}-${mode}-ai.png`,
     ),
   });
   await page.getByRole('button', { name: '获取连接信息' }).click();
@@ -181,9 +188,145 @@ try {
   await page.screenshot({
     path: resolve(
       root,
-      `docs/assets/platform-shell/2026-10-15-v02-${mode}-diff.png`,
+      `docs/assets/platform-shell/2026-10-20-v${version}-${mode}-diff.png`,
     ),
   });
+  const fixtures = resolve(root, '.runtime/media-fixtures');
+  execFileSync(
+    'uv',
+    [
+      'run',
+      '--frozen',
+      '--group',
+      'desktop-build',
+      'python',
+      'scripts/create_media_fixtures.py',
+      fixtures,
+    ],
+    { cwd: root, windowsHide: true },
+  );
+  await mkdir(resolve(root, 'docs/assets/media-tools'), { recursive: true });
+  for (const [kind, filename, title] of [
+    ['image', 'source.png', '图片'],
+    ['video', 'source.mp4', '视频'],
+    ['audio', 'source.wav', '音频'],
+  ]) {
+    await page.getByRole('link', { name: '工具目录', exact: true }).click();
+    await page.locator(`a.card-link[href="/tools/${kind}-editor"]`).click();
+    await page
+      .getByLabel(native ? '导入媒体副本' : '选择并上传媒体文件', {
+        exact: true,
+      })
+      .setInputFiles(resolve(fixtures, filename));
+    await expect(page.locator('.media-input .media-file-name')).toContainText(
+      filename,
+      { timeout: 15000 },
+    );
+    if (kind !== 'audio') {
+      await page.getByLabel('裁剪画面').check();
+      await page.getByLabel('裁剪宽度（像素）', { exact: true }).fill('160');
+      await page.getByLabel('裁剪高度（像素）', { exact: true }).fill('120');
+      await page
+        .getByLabel('选择水印 / 贴图', { exact: true })
+        .setInputFiles(resolve(fixtures, 'overlay.png'));
+      await expect(
+        page.locator('.media-options .media-file-name'),
+      ).toContainText('overlay.png', { timeout: 15000 });
+    } else {
+      await page
+        .getByLabel('选择配乐 / 音效', { exact: true })
+        .setInputFiles(resolve(fixtures, 'source.wav'));
+      await expect(
+        page.locator('.media-options .media-file-name'),
+      ).toContainText('source.wav', { timeout: 15000 });
+    }
+    if (kind !== 'image')
+      await page.getByLabel('结束时间（秒，留空到结尾）').fill('1');
+    if (kind === 'video') {
+      await page
+        .getByRole('button', { name: '添加剪辑片段', exact: true })
+        .click();
+      await page.getByLabel('片段 1 结束（秒）').fill('0.5');
+      await page
+        .getByRole('button', { name: '添加剪辑片段', exact: true })
+        .click();
+      await page.getByLabel('片段 2 开始（秒）').fill('1');
+      await page.getByLabel('片段 2 结束（秒）').fill('1.5');
+      await page
+        .getByText('画面与速度：旋转、镜像、缩放、调色', { exact: true })
+        .click();
+      await page.getByLabel('播放速度（倍）').fill('2');
+      await page.getByLabel('顺时针旋转').selectOption('90');
+      await page.getByLabel('输出宽度（像素，留空不缩放）').fill('120');
+      await page.getByLabel('黑白画面').check();
+      await page
+        .getByRole('button', { name: '添加此水印到组合', exact: true })
+        .click();
+      await page.getByLabel('水印 1 显示结束（秒，留空到结尾）').fill('0.2');
+      await page
+        .getByLabel('选择水印 / 贴图', { exact: true })
+        .setInputFiles(resolve(fixtures, 'overlay.png'));
+      await expect(
+        page.locator('.media-options .media-file-name'),
+      ).toContainText('overlay.png');
+      await page
+        .getByRole('button', { name: '添加此水印到组合', exact: true })
+        .click();
+      await page.getByLabel('水印 2 显示开始（秒）').fill('0.2');
+      await page.getByLabel('移除原视频声音').check();
+    }
+    await page
+      .getByRole('button', { name: `生成${title}`, exact: true })
+      .click();
+    const result = page.getByRole('region', { name: '处理任务' });
+    await expect(result.getByText('处理完成', { exact: true })).toBeVisible({
+      timeout: 20000,
+    });
+    if (kind === 'image')
+      await expect(result.locator('img')).toHaveJSProperty('naturalWidth', 160);
+    else
+      await expect(
+        result.locator(kind === 'video' ? 'video' : 'audio'),
+      ).toHaveJSProperty('readyState', 4);
+    if (kind === 'video') {
+      await expect(result.locator('video')).toHaveJSProperty('videoWidth', 120);
+      await expect(result.locator('video')).toHaveJSProperty(
+        'videoHeight',
+        160,
+      );
+    }
+    const downloadUrl = await result
+      .getByRole('link', { name: '下载处理结果' })
+      .getAttribute('href');
+    const file = await page.evaluate(async (url) => {
+      const response = await fetch(url);
+      return {
+        status: response.status,
+        size: (await response.arrayBuffer()).byteLength,
+      };
+    }, downloadUrl);
+    expect(file.status).toBe(200);
+    expect(file.size).toBeGreaterThan(50);
+    await page.screenshot({
+      path: resolve(
+        root,
+        `docs/assets/media-tools/2026-10-20-v${version}-${mode}-${kind}.png`,
+      ),
+      fullPage: true,
+    });
+  }
+  if (native)
+    execFileSync(
+      resolve(root, '.venv/Scripts/python.exe'),
+      [
+        'scripts/verify_windows_icon.py',
+        '--directory',
+        desktopDirectory,
+        '--pid',
+        String(processHandle.pid),
+      ],
+      { cwd: root, windowsHide: true, stdio: 'inherit' },
+    );
   expect(errors).toEqual([]);
   console.log(
     `${mode}: real operation, deep route, preferences, AI configuration and UI passed`,

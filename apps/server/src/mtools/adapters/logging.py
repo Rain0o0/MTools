@@ -15,11 +15,13 @@ class JsonFormatter(logging.Formatter):
         }
         for key in (
             "request_id",
+            "job_id",
             "tool_id",
             "operation_id",
             "invocation_source",
             "status",
             "duration_ms",
+            "exception_type",
         ):
             if hasattr(record, key):
                 value[key] = getattr(record, key)

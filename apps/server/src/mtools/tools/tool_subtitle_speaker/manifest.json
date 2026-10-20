@@ -1,0 +1,60 @@
+{
+  "manifest_version": 1,
+  "tool_id": "subtitle-speaker",
+  "version": "1.0.0",
+  "name": "字幕生成音频",
+  "description": "按字幕时间轴配音，本地 Qwen3-TTS 1.7B CustomVoice 优先，其他环境默认 Edge TTS。",
+  "category": "媒体工具",
+  "tags": [
+    "视频",
+    "音频",
+    "字幕",
+    "TTS"
+  ],
+  "execution_target": "backend",
+  "supported_modes": [
+    "desktop",
+    "source-web",
+    "docker-web"
+  ],
+  "required_capabilities": [],
+  "dependencies": [],
+  "operations": [
+    {
+      "operation_id": "synthesize",
+      "title": "生成配音",
+      "description": "按字幕时间轴配音，本地 Qwen3-TTS 1.7B CustomVoice 优先，其他环境默认 Edge TTS。 支持已授权 artifact_id 或本机绝对路径；用户已明确指定文件和动作时，引用任务原话到 user_authorization 直接执行，无需重复确认。原件只读，结果另存；返回 job_id 后用 media-library/status 查询和 read 读取。 输入 SRT/WebVTT 正文或字幕文件。engine=auto 优先本地 Qwen，显式 edge 可用微软在线音色，但必须 allow_network=true（字幕正文发送到微软）；未同意联网则报错，不静默切换。显式 qwen 缺模型会给出官方链接，不自动下载。默认超长语音最多加速 4 倍对齐，strict 模式直接报错，不截断。",
+      "effects": "external",
+      "ai_authorization": "conversation",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/SubtitleSpeech",
+      "output_schema": "#/components/schemas/Job",
+      "execution": "job",
+      "cancellable": true,
+      "idempotent": false,
+      "timeout_seconds": 30,
+      "max_input_bytes": 400000
+    },
+    {
+      "operation_id": "environment",
+      "title": "查看语音环境",
+      "description": "只读查询本地 Whisper 模型、Qwen CustomVoice 与 Edge TTS 安装状态及官方链接；不加载权重或下载模型。",
+      "effects": "read-only",
+      "ai_callable": true,
+      "contract_version": 1,
+      "input_schema": "#/components/schemas/EmptyParameters",
+      "output_schema": "#/components/schemas/SpeechEnvironment",
+      "idempotent": true,
+      "timeout_seconds": 10,
+      "max_input_bytes": 1000
+    }
+  ],
+  "ui": {
+    "route": "/tools/subtitle-speaker"
+  },
+  "docs": {
+    "overview": "docs/features/media-workflows/overview.md",
+    "usage": "docs/features/media-workflows/usage.md"
+  }
+}
